@@ -64,7 +64,7 @@ Before writing, inspect the page in the running app (Playwright MCP snapshot, if
 - Locators are `private final Locator` fields initialised in the constructor / field initialiser; prefer
   `getByRole`, `getByPlaceholder`, `getByText`, `getByLabel` over CSS/XPath.
 - Navigation methods return the next PO (`new MyTravelsPage(page)`), other actions return `this`.
-- Package for tests using POs: `io.student.rangiffler.test.web`. Test data comes from `utils/RandomDataUtils`,
+- Tests using POs live in feature packages under `io.student.rangiffler.test` (e.g. `auth`, `profile`) and extend `io.student.rangiffler.test.BaseWebTest`. Test data comes from `utils/RandomDataUtils`,
   URLs from `config/TestConfig`.
 
 ## Example

@@ -1,4 +1,4 @@
-package io.student.rangiffler.test.web;
+package io.student.rangiffler.test;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;

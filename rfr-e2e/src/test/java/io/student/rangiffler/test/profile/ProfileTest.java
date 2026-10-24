@@ -6,7 +6,7 @@ import io.student.rangiffler.annotation.User;
 import io.student.rangiffler.model.TestUser;
 import io.student.rangiffler.page.ProfilePage;
 import io.student.rangiffler.page.WelcomePage;
-import io.student.rangiffler.test.web.BaseWebTest;
+import io.student.rangiffler.test.BaseWebTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
