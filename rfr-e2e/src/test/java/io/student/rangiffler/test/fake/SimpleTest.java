@@ -7,10 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SimpleTest {
 
-  @Test
-  void simpleTest() {
-    Allure.step("Simple test", () -> {
-      assertEquals(2, 1 + 1);
-    });
-  }
+    @Test
+    void simpleTest() {
+        Allure.step("Simple test", () -> {
+            assertEquals(2, 1 + 1);
+        });
+    }
 }

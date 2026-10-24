@@ -10,6 +10,7 @@ def allureReportVersion = '3.17.0'
 def aspectJVersion = '1.9.25.1'
 def junitVersion = '6.1.3'
 def playwrightVersion = '1.63.0'
+def dataFakerVersion = '2.7.0'
 
 configurations {
     agent {
@@ -23,10 +24,17 @@ dependencies {
 
     testImplementation platform("org.junit:junit-bom:$junitVersion")
     testImplementation platform("io.qameta.allure:allure-bom:$allureJavaVersion")
+    testImplementation platform("org.springframework.boot:spring-boot-dependencies:4.1.1")
 
     testImplementation "io.qameta.allure:allure-jupiter"
     testImplementation "io.qameta.allure:allure-playwright"
     testImplementation "com.microsoft.playwright:playwright:$playwrightVersion"
+    testImplementation "net.datafaker:datafaker:$dataFakerVersion"
+
+    testImplementation "org.springframework:spring-jdbc"
+    testImplementation "org.springframework.security:spring-security-crypto"
+    testImplementation "com.zaxxer:HikariCP"
+    testRuntimeOnly "com.mysql:mysql-connector-j"
 
     testImplementation "org.junit.jupiter:junit-jupiter"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
@@ -43,5 +51,16 @@ allure {
 
 test {
     useJUnitPlatform()
+    // browsers are installed beforehand (npx playwright install chromium); skip Playwright's auto-download of all of them
+    environment 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', '1'
+    ['front.url', 'auth.url', 'auth.db.url', 'api.db.url', 'db.user', 'db.password', 'browser.locale', 'headed'].each { key ->
+        System.getProperty(key)?.with { systemProperty key, it }
+    }
     jvmArgumentProviders.add({ ["-javaagent:${configurations.agent.singleFile}"] } as CommandLineArgumentProvider)
+}
+
+tasks.register('installPlaywright', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    args 'install', 'chromium'
 }
