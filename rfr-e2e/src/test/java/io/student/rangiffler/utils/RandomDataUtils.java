@@ -2,8 +2,6 @@ package io.student.rangiffler.utils;
 
 import net.datafaker.Faker;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -11,9 +9,8 @@ import java.util.UUID;
  */
 public final class RandomDataUtils {
 
+    private static final String USERNAME_PREFIX = "rfr_";
     private static final int MAX_PASSWORD_LENGTH = 12;
-    private static final List<String> COUNTRIES =
-            List.of("Japan", "France", "Germany", "Netherlands", "Italy", "Spain", "Canada", "Brazil");
     private static final Faker FAKER = new Faker();
 
     private RandomDataUtils() {
@@ -23,7 +20,7 @@ public final class RandomDataUtils {
      * Returns a unique username.
      */
     public static String randomUsername() {
-        return "user" + UUID.randomUUID().toString().substring(0, 6);
+        return USERNAME_PREFIX + UUID.randomUUID().toString().substring(0, 6);
     }
 
     /**
@@ -39,18 +36,5 @@ public final class RandomDataUtils {
 
     public static String randomSurname() {
         return FAKER.name().lastName();
-    }
-
-    /**
-     * Returns a random country name from a short list of countries available in the application, skipping the excluded ones.
-     */
-    public static String randomCountry(String... excluded) {
-        List<String> candidates = COUNTRIES.stream()
-                .filter(country -> !Arrays.asList(excluded).contains(country))
-                .toList();
-        if (candidates.isEmpty()) {
-            throw new IllegalStateException("No country left after excluding " + Arrays.toString(excluded));
-        }
-        return FAKER.options().nextElement(candidates);
     }
 }

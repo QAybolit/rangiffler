@@ -20,7 +20,9 @@ Before writing, inspect the page in the running app (Playwright MCP snapshot, if
 4. **One business action = one PO method.** Steps that make up a single business action (e.g. filling a form)
    are merged into one method such as `fillForm(username, password, confirmPassword)`, not exposed as separate
    `setUsername()` / `setPassword()` methods. Submitting is a separate action method unless the user asks otherwise.
-5. **Always `@Step`.** Every public PO method (actions and checks) has `io.qameta.allure.Step`.
+5. **Always `@Step`.** Every public PO method (actions and checks) has `io.qameta.allure.Step`. The only exception
+   is accessor methods that merely return a field and do nothing else, such as `public Header header() { return header; }`:
+   they do not need `@Step`.
 6. **Log parameters.** Put method parameters into the step name with placeholders, e.g.
    `@Step("Fill registration form for user '{username}'")`. Placeholders use the Java parameter names.
    Never print secrets: omit passwords/tokens from the step text (or use a masked value).

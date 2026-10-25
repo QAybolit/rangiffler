@@ -14,7 +14,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static io.student.rangiffler.utils.RandomDataUtils.randomCountry;
 import static io.student.rangiffler.utils.RandomDataUtils.randomFirstName;
 import static io.student.rangiffler.utils.RandomDataUtils.randomSurname;
 
@@ -26,6 +25,8 @@ import static io.student.rangiffler.utils.RandomDataUtils.randomSurname;
 class ProfileTest extends BaseWebTest {
 
     private static final String DEFAULT_COUNTRY = "Russian Federation";
+    private static final String FRANCE = "France";
+    private static final String GERMANY = "Germany";
 
     /**
      * Checks that the first name is saved and shown after a reload.
@@ -67,19 +68,16 @@ class ProfileTest extends BaseWebTest {
     @Test
     @DisplayName("Location can be changed and the new country is shown after reload")
     void shouldChangeLocation(@User TestUser user) {
-        String firstCountry = randomCountry(DEFAULT_COUNTRY);
-        String secondCountry = randomCountry(DEFAULT_COUNTRY, firstCountry);
-
         openProfile(user)
                 .shouldHaveLocation(DEFAULT_COUNTRY)
-                .fillForm("", "", firstCountry)
+                .fillForm("", "", FRANCE)
                 .clickSave()
                 .reload()
-                .shouldHaveLocation(firstCountry)
-                .fillForm("", "", secondCountry)
+                .shouldHaveLocation(FRANCE)
+                .fillForm("", "", GERMANY)
                 .clickSave()
                 .reload()
-                .shouldHaveLocation(secondCountry);
+                .shouldHaveLocation(GERMANY);
     }
 
     /**
@@ -104,17 +102,16 @@ class ProfileTest extends BaseWebTest {
     void shouldResetToSavedValues(@User TestUser user) {
         String firstName = randomFirstName();
         String surname = randomSurname();
-        String country = randomCountry(DEFAULT_COUNTRY);
 
         openProfile(user)
-                .fillForm(firstName, surname, country)
+                .fillForm(firstName, surname, FRANCE)
                 .clickSave()
                 .reload()
-                .fillForm(firstName + "x", surname + "x", randomCountry(DEFAULT_COUNTRY, country))
+                .fillForm(firstName + "x", surname + "x", GERMANY)
                 .reset()
                 .shouldHaveFirstName(firstName)
                 .shouldHaveSurname(surname)
-                .shouldHaveLocation(country);
+                .shouldHaveLocation(FRANCE);
     }
 
     /**

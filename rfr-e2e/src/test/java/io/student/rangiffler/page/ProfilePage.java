@@ -8,7 +8,6 @@ import io.student.rangiffler.config.TestConfig;
 import io.student.rangiffler.page.component.Header;
 
 import java.nio.file.Path;
-import java.util.regex.Pattern;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
@@ -32,7 +31,7 @@ public final class ProfilePage {
         this.page = page;
         this.header = new Header(page);
         this.avatarInput = page.getByLabel("Update avatar");
-        this.avatarImage = page.getByRole(AriaRole.MAIN).locator(".MuiAvatar-img");
+        this.avatarImage = page.getByRole(AriaRole.MAIN).locator("img[src^='data:image/']:not([alt])");
         this.firstNameInput = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("First Name"));
         this.surnameInput = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Surname"));
         this.usernameInput = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Username"));
@@ -113,7 +112,7 @@ public final class ProfilePage {
 
     @Step("Check that avatar is displayed")
     public ProfilePage shouldHaveAvatar() {
-        assertThat(avatarImage).hasAttribute("src", Pattern.compile("^data:image/.+"));
+        assertThat(avatarImage).isVisible();
         return this;
     }
 
