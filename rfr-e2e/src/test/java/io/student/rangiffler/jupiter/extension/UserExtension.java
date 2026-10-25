@@ -1,8 +1,8 @@
-package io.student.rangiffler.extension;
+package io.student.rangiffler.jupiter.extension;
 
-import io.student.rangiffler.annotation.User;
-import io.student.rangiffler.fixture.UserFixture;
-import io.student.rangiffler.model.TestUser;
+import io.student.rangiffler.data.TestUser;
+import io.student.rangiffler.data.UserFixture;
+import io.student.rangiffler.jupiter.annotation.User;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
