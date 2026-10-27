@@ -8,6 +8,7 @@ version = '1.0.0'
 def allureJavaVersion = '3.0.0'
 def allureReportVersion = '3.17.0'
 def aspectJVersion = '1.9.25.1'
+def flywayVersion = rootProject.project(':rfr-api').flywayVersion
 def junitVersion = '6.1.3'
 def playwrightVersion = '1.63.0'
 def dataFakerVersion = '2.7.0'
@@ -33,14 +34,16 @@ dependencies {
 
     testImplementation "org.springframework:spring-jdbc"
     testImplementation "org.springframework.security:spring-security-crypto"
+    testImplementation "org.flywaydb:flyway-core:$flywayVersion"
+    testRuntimeOnly "org.flywaydb:flyway-mysql:$flywayVersion"
     testImplementation "com.zaxxer:HikariCP"
     testRuntimeOnly "com.mysql:mysql-connector-j"
 
     testImplementation "org.junit.jupiter:junit-jupiter"
+    testImplementation "org.junit.platform:junit-platform-testkit"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testRuntimeOnly "org.aspectj:aspectjrt:$aspectJVersion"
 }
-
 
 allure {
     version = allureReportVersion
@@ -49,18 +52,53 @@ allure {
     }
 }
 
-test {
-    useJUnitPlatform()
+tasks.withType(Test).configureEach {
+    systemProperty 'rfr.authMigrations', rootProject.file('rfr-auth/src/main/resources/db/migration/rangiffler-auth').absolutePath
+    systemProperty 'rfr.apiMigrations', rootProject.file('rfr-api/src/main/resources/db/migration/rangiffler-api').absolutePath
+    systemProperties System.getProperties().findAll { key, value -> key.toString().startsWith('rfr.') }
     // browsers are installed beforehand (npx playwright install chromium); skip Playwright's auto-download of all of them
     environment 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', '1'
-    ['front.url', 'auth.url', 'auth.db.url', 'api.db.url', 'db.user', 'db.password', 'browser.locale', 'headed'].each { key ->
-        System.getProperty(key)?.with { systemProperty key, it }
-    }
     jvmArgumentProviders.add({ ["-javaagent:${configurations.agent.singleFile}"] } as CommandLineArgumentProvider)
+    outputs.upToDateWhen { false }
+}
+
+test {
+    failOnNoDiscoveredTests = false
+    useJUnitPlatform()
+    doFirst {
+        if (filter.commandLineIncludePatterns.empty) {
+            options { excludeTags 'ui' }
+        }
+    }
+}
+
+def waitForStand = tasks.register('waitForStand', Exec) {
+    group = 'verification'
+    description = 'Waits until MySQL, rfr-auth, rfr-api and the front respond'
+    workingDir = rootProject.projectDir
+    commandLine 'scripts/wait-for-stand.sh'
+}
+
+tasks.register('e2e', Test) {
+    group = 'verification'
+    description = 'Runs UI tests against a running stand'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    systemProperty 'rfr.migrationCheck', 'true'
+    useJUnitPlatform {
+        includeTags 'ui'
+    }
+    dependsOn waitForStand
 }
 
 tasks.register('installPlaywright', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.microsoft.playwright.CLI'
     args 'install', 'chromium'
+}
+
+tasks.register('installPlaywrightWithDeps', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    args 'install', '--with-deps', 'chromium'
 }

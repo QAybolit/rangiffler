@@ -1,4 +1,4 @@
-package io.student.rangiffler.page;
+package io.student.rangiffler.ui.page;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;

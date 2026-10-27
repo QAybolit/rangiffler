@@ -1,0 +1,20 @@
+services:
+  mysql:
+    image: mysql:8.4.7
+    container_name: rfr-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+    volumes:
+      - mysql-volume:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+volumes:
+  mysql-volume:
+    name: mysql-volume

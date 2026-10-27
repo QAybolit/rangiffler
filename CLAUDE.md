@@ -6,16 +6,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Rangiffler is a QA.GURU Advanced diploma template (README is in Russian): a photo-travel app with a GraphQL frontend. Students are expected to turn the monolithic `rfr-api` into microservices and add thorough test coverage. Gradle multi-project (`rfr`), Java 25, Gradle 9.7.1, Spring Boot 4.1.1.
 
-| Module | Role | Port |
-|---|---|---|
-| `rfr-auth` | Spring Authorization Server (OAuth 2.0 / OIDC, Thymeleaf login/register pages) | 9001 |
-| `rfr-api` | GraphQL backend, OAuth2 Resource Server (JWT, audience `rangiffler-api`) | 8081 |
-| `rfr-gql-client` | React 19 + TS + Vite + Apollo frontend (npm project, not part of Gradle) | 3001 |
-| `rfr-e2e` | JUnit 6 + Playwright Java + Allure tests (currently only a stub `SimpleTest`) | – |
+| Module | Role | Port | CLAUDE.md |
+|---|---|---|---|
+| `rfr-auth` | Spring Authorization Server (OAuth 2.0 / OIDC, Thymeleaf login/register pages) | 9001 | [rfr-auth/CLAUDE.md](rfr-auth/CLAUDE.md) |
+| `rfr-api` | GraphQL backend, OAuth2 Resource Server (JWT, audience `rangiffler-api`) | 8081 | [rfr-api/CLAUDE.md](rfr-api/CLAUDE.md) |
+| `rfr-gql-client` | React 19 + TS + Vite + Apollo frontend (npm project, not part of Gradle) | 3001 | [rfr-gql-client/CLAUDE.md](rfr-gql-client/CLAUDE.md) |
+| `rfr-e2e` | JUnit 6 + Playwright Java + Allure UI tests (auth and profile scenarios, page objects, `@User` test-user extension) | – | [rfr-e2e/CLAUDE.md](rfr-e2e/CLAUDE.md) |
+
+## Required configuration
+
+Taken from the root `README.md`:
+
+- **Tools:** Java 25, Gradle 9.7.1 (use the `./gradlew` wrapper), Docker, Node.js `^20.19.0` or `>=22.12.0` with npm (Vite 8).
+- **Database:** MySQL 8.4.7 in the Docker container `rfr-mysql`, started by `localenv.sh` through `docker-compose.yml` (port 3306, root password `secret`, volume `mysql-volume`). Each service owns its own schema (`rangiffler-api`, `rangiffler-auth`) and migrates it with Flyway.
+- **Ports that must be free:** 3306 (MySQL), 9001 (`rfr-auth`), 8081 (`rfr-api`), 3001 (frontend).
+- **Frontend settings:** `rfr-gql-client/.env` holds `VITE_AUTH_URL=http://localhost:9001`, `VITE_API_URL=http://localhost:8081`, `VITE_FRONT_HOST=localhost`, `VITE_FRONT_URL=http://localhost:3001` and `VITE_CLIENT_ID=client`. The dev server port 3001 is fixed in `vite.config.ts`, and the OAuth client `client` in `rfr-auth` expects the redirect URI `http://localhost:3001/authorized`, so the port cannot be changed in one place only.
+- **Start order:** database, then `rfr-auth`, then `rfr-api`, then the frontend (see Commands). It works when the "Login" button on http://localhost:3001 signs in through `rfr-auth` and opens the main page.
 
 ## Commands
 
-Infrastructure (MySQL 8.4 in Docker, root/`secret`; note `localenv.sh` stops and removes ALL Docker containers first):
+Infrastructure (MySQL 8.4 in Docker, root/`secret`; `localenv.sh` runs `docker compose up -d --wait` for `docker-compose.yml` and first removes only a legacy `rfr-mysql` container created without compose; the data volume `mysql-volume` is kept):
 ```bash
 bash localenv.sh
 ```
@@ -25,15 +35,24 @@ Run services (from repo root, each in its own terminal):
 ./gradlew :rfr-api:bootRun
 cd rfr-gql-client && npm i && npm run dev
 ```
+Or start both backends with one command (`gradle.properties` turns on parallel project execution, which this needs; stop with Ctrl+C; the frontend is still started separately):
+```bash
+./gradlew runAll
+```
 Build / test:
 ```bash
 ./gradlew build
 ./gradlew :rfr-api:generateJava      # regenerate GraphQL model classes
-./gradlew :rfr-e2e:test              # all e2e tests
-./gradlew :rfr-e2e:test --tests 'io.student.rangiffler.test.fake.SimpleTest'   # single test
+./gradlew :rfr-e2e:e2e               # UI tests (tag ui) against a running stand
+./gradlew :rfr-e2e:test              # tests without the ui tag
+./gradlew :rfr-e2e:test --tests 'io.student.rangiffler.test.auth.LoginTest'   # single test
 cd rfr-gql-client && npm run lint && npm run build
 ```
 `bash ports.sh` kills processes on 9001, 8081, 3001. GraphiQL: http://localhost:8081/graphiql.
+
+## E2E tests
+
+Rules for writing and running the `rfr-e2e` tests and their settings (`TestConfig` keys, `-D` arguments) are in `rfr-e2e/CLAUDE.md`.
 
 ## Architecture
 
@@ -46,6 +65,6 @@ cd rfr-gql-client && npm run lint && npm run build
 
 ## Working agreement
 
-- **Propose before coding:** when asked to create a new class (page object, component, extension, repository, etc.), first list its public methods (signature and a one-line purpose) and wait for my OK. Write the code only after I approve.
+- **Propose before coding:** when asked to create a new class (page object, component, extension, repository, etc.) or to add public methods to an existing class, first list the public methods (signature and a one-line purpose) and wait for my OK. Write the code only after I approve.
 - **Indentation:** use 4 spaces for Java code.
-- **Javadoc:** write Javadoc for every class and for methods that have logic; keep it to one sentence unless the logic is complex. Getters, setters and other trivial methods without logic need no Javadoc. Page Objects and their components (`page/` package) are the exception: no Javadoc there, their `@Step` annotations describe the methods. Do not add comments inside code (no inline or block comments describing parts of the code).
+- **Javadoc:** write Javadoc for every class and for methods that have logic; keep it to one sentence unless the logic is complex. Getters, setters and other trivial methods without logic need no Javadoc. Page Objects and their components (`ui/` package) are the exception: no Javadoc there, their `@Step` annotations describe the methods. UI test classes (the tests under `rfr-e2e/.../test/`) are an exception too: no Javadoc there, their `@DisplayName` describes the scenario. Do not add comments inside code (no inline or block comments describing parts of the code).

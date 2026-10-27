@@ -37,3 +37,6 @@ AGENTS.md
 docs/
 
 .playwright-mcp/
+
+.claude/settings.local.json
+.claude/.*.bak
