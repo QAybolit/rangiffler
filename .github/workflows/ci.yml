@@ -11,7 +11,49 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      ci: ${{ steps.filter.outputs.ci }}
+      shared: ${{ steps.filter.outputs.shared }}
+      auth: ${{ steps.filter.outputs.auth }}
+      api: ${{ steps.filter.outputs.api }}
+      e2e: ${{ steps.filter.outputs.e2e }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            ci:
+              - '.github/workflows/ci.yml'
+            shared:
+              - 'build.gradle'
+              - 'settings.gradle'
+              - 'gradle.properties'
+              - 'gradle/**'
+              - 'gradlew'
+              - 'gradlew.bat'
+            auth:
+              - 'rfr-auth/**'
+            api:
+              - 'rfr-api/**'
+            e2e:
+              - 'rfr-e2e/**'
+            frontend:
+              - 'rfr-gql-client/**'
+
   backend:
+    needs: changes
+    if: >-
+      needs.changes.outputs.ci == 'true' ||
+      needs.changes.outputs.shared == 'true' ||
+      needs.changes.outputs.auth == 'true' ||
+      needs.changes.outputs.api == 'true' ||
+      needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,12 +62,21 @@ jobs:
           distribution: temurin
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Build rfr-auth and rfr-api
-        run: ./gradlew :rfr-auth:build :rfr-api:build
+        with:
+          cache-read-only: false
+      - name: Build rfr-auth
+        if: needs.changes.outputs.ci == 'true' || needs.changes.outputs.shared == 'true' || needs.changes.outputs.auth == 'true'
+        run: ./gradlew :rfr-auth:build
+      - name: Build rfr-api
+        if: needs.changes.outputs.ci == 'true' || needs.changes.outputs.shared == 'true' || needs.changes.outputs.api == 'true'
+        run: ./gradlew :rfr-api:build
       - name: Compile rfr-e2e tests without running them
+        if: needs.changes.outputs.ci == 'true' || needs.changes.outputs.shared == 'true' || needs.changes.outputs.e2e == 'true'
         run: ./gradlew :rfr-e2e:compileTestJava
 
   frontend:
+    needs: changes
+    if: needs.changes.outputs.ci == 'true' || needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
