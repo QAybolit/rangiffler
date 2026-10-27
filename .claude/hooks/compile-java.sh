@@ -15,7 +15,7 @@ case "$module" in
   *) exit 0 ;;
 esac
 
-if [[ "$rel" == */src/test/* ]]; then
+if [ "$module" = "rfr-e2e" ]; then
   task=compileTestJava
 else
   task=compileJava
@@ -29,6 +29,6 @@ if [ "$status" -eq 0 ]; then
   jq -n --arg message "Java compile OK (:$module:$task) after editing $rel" \
     '{hookSpecificOutput: {hookEventName: "PostToolUse", additionalContext: $message}}'
 else
-  jq -n --arg reason "Java compile FAILED (:$module:$task) after editing $rel:"$'\n'"$(printf '%s' "$output" | tail -60)" \
+  jq -n --arg reason "Java compile FAILED (:$module:$task) after editing $rel:"$'\n'"$(printf '%s' "$output" | grep -v '^WARNING' | tail -60)" \
     '{decision: "block", reason: $reason}'
 fi

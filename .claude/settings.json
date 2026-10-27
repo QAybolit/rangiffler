@@ -22,7 +22,49 @@
       "Bash(rm)",
       "Bash(rm *)",
       "Bash(docker compose down -v*)",
-      "Bash(docker compose down --volumes*)"
+      "Bash(docker compose down --volumes*)",
+      "Bash(git -C * push*)",
+      "Bash(git --git-dir* push*)",
+      "Bash(git -c * push*)",
+      "Bash(git send-pack*)",
+      "Bash(git remote set-url*)",
+      "Bash(git remote add*)",
+      "Bash(git config * alias*)",
+      "Bash(git clean*)",
+      "Bash(git rm*)",
+      "Bash(git reset --hard*)",
+      "Bash(git checkout -- *)",
+      "Bash(git restore*)",
+      "Bash(gh pr create*)",
+      "Bash(gh pr merge*)",
+      "Bash(gh repo sync*)",
+      "Bash(gh api*)",
+      "Bash(/bin/rm*)",
+      "Bash(\\rm*)",
+      "Bash(command rm*)",
+      "Bash(unlink*)",
+      "Bash(rmdir*)",
+      "Bash(shred*)",
+      "Bash(truncate*)",
+      "Bash(find * -delete*)",
+      "Bash(find * -exec rm*)",
+      "Bash(rsync * --delete*)",
+      "Bash(rsync * --remove-source-files*)",
+      "Bash(docker volume rm*)",
+      "Bash(docker system prune*)",
+      "Bash(bash -c *)",
+      "Bash(sh -c *)",
+      "Bash(zsh -c *)",
+      "Bash(eval *)",
+      "Bash(env *)",
+      "Bash(xargs *)",
+      "Bash(python -c *)",
+      "Bash(python3 -c *)",
+      "Bash(node -e *)",
+      "Bash(perl -e *)",
+      "Bash(ruby -e *)",
+      "Edit(.claude/settings*.json)",
+      "Write(.claude/settings*.json)"
     ]
   },
   "enabledMcpjsonServers": [
@@ -44,6 +86,16 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/compile-frontend.sh",
             "timeout": 120,
             "statusMessage": "Type-checking frontend..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/on-change.sh",
+            "timeout": 300
           }
         ]
       }
