@@ -43,3 +43,9 @@ cd rfr-gql-client && npm run lint && npm run build
 - **Database:** each service owns a MySQL schema (`rangiffler-api`, `rangiffler-auth`) with Flyway migrations under `src/main/resources/db/migration/<schema>/`. `V1__schema_init.sql` is written as a monolith schema meant to be split across future services. Profile rows are created lazily on first `Query.user` (default country `ru`).
 - **Errors:** `GraphQlExceptionResolver` maps `ResourceNotFoundException` / `FriendshipActionException` to GraphQL errors (NOT_FOUND / BAD_REQUEST).
 - Each module has its own README with more detail (`rfr-api/README.md` documents API behavior and structure).
+
+## Working agreement
+
+- **Propose before coding:** when asked to create a new class (page object, component, extension, repository, etc.), first list its public methods (signature and a one-line purpose) and wait for my OK. Write the code only after I approve.
+- **Indentation:** use 4 spaces for Java code.
+- **Javadoc:** write Javadoc for every class and for methods that have logic; keep it to one sentence unless the logic is complex. Getters, setters and other trivial methods without logic need no Javadoc. Page Objects and their components (`page/` package) are the exception: no Javadoc there, their `@Step` annotations describe the methods. Do not add comments inside code (no inline or block comments describing parts of the code).
