@@ -10,7 +10,6 @@ import io.student.rangiffler.jupiter.annotation.BrowserLocale;
 import io.student.rangiffler.jupiter.extension.UserExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.platform.commons.support.AnnotationSupport;
@@ -20,7 +19,6 @@ import java.util.Locale;
 /**
  * Base class for UI tests that starts a browser per test with the locale chosen by {@code @BrowserLocale}.
  */
-@Tag("ui")
 @ExtendWith(UserExtension.class)
 public abstract class BaseWebTest {
 

@@ -19,7 +19,7 @@ Layering: `jupiter` has no SQL and no locators; `data` has no JUnit; tests have 
 
 ## Running
 
-`BaseWebTest` carries `@Tag("ui")`, so every UI test is tagged.
+Every UI test class carries its own `@Tag("ui")` (it is not inherited from `BaseWebTest`), so a new UI test class must add the tag itself, otherwise `e2e` skips it.
 ```bash
 ./gradlew :rfr-e2e:installPlaywright          # once: Chromium for Playwright
 ./gradlew :rfr-e2e:e2e                        # UI tests (tag ui) after waiting for the stand
