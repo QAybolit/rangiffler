@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew *)",
+      "Bash(bash localenv.sh)",
+      "Bash(bash ports.sh)",
+      "Bash(./scripts/wait-for-stand.sh*)",
+      "Bash(scripts/wait-for-stand.sh*)",
+      "Bash(docker compose *)",
+      "Bash(docker ps*)",
+      "Bash(docker start rfr-mysql)",
+      "Bash(docker stop rfr-mysql)",
+      "Bash(npm ci)",
+      "Bash(npm install)",
+      "Bash(npm run *)",
+      "Bash(mv * *.bak)",
+      "mcp__playwright"
+    ],
+    "deny": [
+      "Bash(git push)",
+      "Bash(git push *)",
+      "Bash(rm)",
+      "Bash(rm *)",
+      "Bash(docker compose down -v*)",
+      "Bash(docker compose down --volumes*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "playwright"
+  ]
+}
