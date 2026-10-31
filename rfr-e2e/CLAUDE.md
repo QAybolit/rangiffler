@@ -9,7 +9,7 @@ One `src/test` source set, package `io.student.rangiffler`:
 | Package | Contents |
 |---|---|
 | `config` | `TestConfig`, the only place that reads settings |
-| `jupiter` | JUnit infrastructure: `annotation` (`@User`, `@BrowserLocale`), `extension` (`UserExtension`) |
+| `jupiter` | JUnit infrastructure: `annotation` (`@User`), `extension` (`UserExtension`) |
 | `data` | Test data and its owners: `TestUser`, `UserFixture` with its implementation and decorators, `UserRequest`; `data/db` has `Databases`, `Jdbc` and the repositories (`ApiUserRepository`, `AuthUserRepository`) |
 | `utils` | Stateless static helpers, e.g. `RandomDataUtils` |
 | `ui` | `page` (Page Objects) and `component` (shared page parts) |
@@ -41,7 +41,7 @@ Every UI test class carries its own `@Tag("ui")` (it is not inherited from `Base
 | `rfr.dbUser` / `rfr.dbPassword` | `root` / `secret` | Database credentials |
 | `rfr.browser` | `chromium` | `chromium`, `firefox` or `webkit` |
 | `rfr.headless` | `true` | `false` shows the browser window |
-| `rfr.browserLocale` | `en-US` | Default browser locale; `@BrowserLocale` on a test overrides it |
+| `rfr.browserLocale` | `en-US` | Browser locale for all UI tests (set in `PlaywrightOptions`) |
 
 `rfr-e2e/build.gradle` forwards every `-Drfr.*` argument to the test JVM, and environment variables reach it by default, so pass a setting either way:
 ```bash
