@@ -9,11 +9,11 @@ One `src/test` source set, package `io.student.rangiffler`:
 | Package | Contents |
 |---|---|
 | `config` | `TestConfig`, the only place that reads settings |
-| `jupiter` | JUnit infrastructure: `annotation` (`@User`), `extension` (`UserExtension`) |
-| `data` | Test data and its owners: `TestUser`, `UserFixture` with its implementation and decorators, `UserRequest`; `data/db` has `Databases`, `Jdbc` and the repositories (`ApiUserRepository`, `AuthUserRepository`) |
+| `jupiter` | JUnit infrastructure: `annotation` (`@User` with `friends`, `incomeInvitations`, `outcomeInvitations`), `extension` (`UserExtension`, and `UserExtensionTest`, which runs nested sample classes through EngineTestKit) |
+| `data` | Test data and its owners: `TestUser`, `UserFixture` with `BaseUserFixture` and the decorators `UserWithFriendsFixture`, `UserWithIncomeInvitationsFixture`, `UserWithOutcomeInvitationsFixture` (shared partner logic in `Partners`), `UserRequest`; `data/db` has `Databases`, `Jdbc` and the repositories (`ApiUserRepository`, `AuthUserRepository`), `Friendship` and `FriendshipStatus`; SQL files are in `src/test/resources/sql/{api,auth}` |
 | `utils` | Stateless static helpers, e.g. `RandomDataUtils` |
 | `ui` | `page` (Page Objects) and `component` (shared page parts) |
-| `test` | `BaseWebTest` and the tests, grouped by feature (`auth`, `profile`, ...) |
+| `test` | `BaseWebTest` and the tests, grouped by feature (`auth`, `profile`, `people`, ...) |
 
 Layering: `jupiter` has no SQL and no locators; `data` has no JUnit; tests have no locators and no SQL; no `ThreadLocal` for test state, it lives in the extension's `Store`.
 
@@ -27,6 +27,8 @@ Every UI test class carries its own `@Tag("ui")` (it is not inherited from `Base
 ./gradlew :rfr-e2e:test --tests '<TestClass>' # one test; with --tests the ui tag is not excluded
 ```
 `e2e` runs `waitForStand` first (`scripts/wait-for-stand.sh`), which waits for MySQL, `rfr-auth`, `rfr-api` and the frontend for up to `WAIT_TIMEOUT` seconds (default 180).
+
+`UserExtensionTest` (tag `extension`) needs MySQL but no browser. Its nested sample classes are enabled only when the configuration parameter `rfr.testkit` is `true`, which the test sets itself, so they never run on their own.
 
 ## Test settings
 
