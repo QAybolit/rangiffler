@@ -44,6 +44,7 @@ Every UI test class carries its own `@Tag("ui")` (it is not inherited from `Base
 | `rfr.browser` | `chromium` | `chromium`, `firefox` or `webkit` |
 | `rfr.headless` | `true` | `false` shows the browser window |
 | `rfr.browserLocale` | `en-US` | Browser locale for all UI tests (set in `PlaywrightOptions`) |
+| `rfr.staticUserTimeout` | `30` | Seconds `StaticUserFixture` waits for a free pooled user before failing |
 
 `rfr-e2e/build.gradle` forwards every `-Drfr.*` argument to the test JVM, and environment variables reach it by default, so pass a setting either way:
 ```bash

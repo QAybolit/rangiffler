@@ -29,6 +29,7 @@ TestConfig читает -Drfr.<ключ> → RFR_<КЛЮЧ> → значение
 | rfr.dbUser / rfr.dbPassword | root / secret |
 | rfr.browser / rfr.headless | chromium / true |
 | rfr.browserLocale | en-US |
+| rfr.staticUserTimeout | 30 (секунд ожидания свободного пользователя из пула) |
 
 ## Архитектура
 
