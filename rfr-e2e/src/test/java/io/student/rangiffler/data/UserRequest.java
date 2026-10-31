@@ -28,7 +28,7 @@ public record UserRequest(int friends, int incomeInvitations) {
      */
     public UserFixture fixture() {
         return UserWithIncomeInvitationsFixture.create(
-                UserWithFriendsFixture.create(SingleUserFixture.create(), friends),
+                UserWithFriendsFixture.create(BaseUserFixture.create(), friends),
                 incomeInvitations
         );
     }

@@ -27,7 +27,7 @@ public final class UserWithFriendsFixture implements UserFixture {
         List<UserFixture> created = new ArrayList<>();
         try {
             for (int index = 0; index < friends; index++) {
-                UserFixture friend = SingleUserFixture.create();
+                UserFixture friend = BaseUserFixture.create();
                 created.add(friend);
                 Allure.step("Create " + FriendshipStatus.ACCEPTED + " friendship '" + origin.user().username() + "' -> '" + friend.user().username() + "'",
                         () -> ApiUserRepository.createFriendship(origin.user().username(), friend.user().username(), FriendshipStatus.ACCEPTED));

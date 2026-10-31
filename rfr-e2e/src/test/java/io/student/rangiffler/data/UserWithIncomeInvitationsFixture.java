@@ -27,7 +27,7 @@ public final class UserWithIncomeInvitationsFixture implements UserFixture {
         List<UserFixture> created = new ArrayList<>();
         try {
             for (int index = 0; index < invitations; index++) {
-                UserFixture inviter = SingleUserFixture.create();
+                UserFixture inviter = BaseUserFixture.create();
                 created.add(inviter);
                 Allure.step("Create " + FriendshipStatus.PENDING + " friendship '" + inviter.user().username() + "' -> '" + origin.user().username() + "'",
                         () -> ApiUserRepository.createFriendship(inviter.user().username(), origin.user().username(), FriendshipStatus.PENDING));

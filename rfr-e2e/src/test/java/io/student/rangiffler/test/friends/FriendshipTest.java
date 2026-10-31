@@ -2,7 +2,7 @@ package io.student.rangiffler.test.friends;
 
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import io.student.rangiffler.data.SingleUserFixture;
+import io.student.rangiffler.data.BaseUserFixture;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.UserFixture;
 import io.student.rangiffler.jupiter.annotation.User;
@@ -47,7 +47,7 @@ class FriendshipTest extends BaseWebTest {
     @Test
     @DisplayName("Invitation sent in the browser is shown as waiting")
     void shouldShowInvitationSentInBrowserAsWaiting() {
-        try (UserFixture sender = SingleUserFixture.create(); UserFixture addressee = SingleUserFixture.create()) {
+        try (UserFixture sender = BaseUserFixture.create(); UserFixture addressee = BaseUserFixture.create()) {
             openPeople(sender.user())
                     .openAllPeople()
                     .search(addressee.user().username())

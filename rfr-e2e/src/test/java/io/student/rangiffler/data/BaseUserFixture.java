@@ -12,19 +12,19 @@ import static io.student.rangiffler.utils.RandomDataUtils.randomUsername;
 /**
  * Owns one test user's lifecycle: creates it with a profile in the databases and removes it on close.
  */
-public final class SingleUserFixture implements UserFixture {
+public final class BaseUserFixture implements UserFixture {
 
     private final TestUser user;
 
-    private SingleUserFixture(TestUser user) {
+    private BaseUserFixture(TestUser user) {
         this.user = user;
     }
 
     /**
      * Creates a random user in the auth database and its profile in the api database, and cleans up if that fails.
      */
-    public static SingleUserFixture create() {
-        SingleUserFixture fixture = new SingleUserFixture(new TestUser(randomUsername(), randomPassword(), List.of(), List.of()));
+    public static BaseUserFixture create() {
+        BaseUserFixture fixture = new BaseUserFixture(new TestUser(randomUsername(), randomPassword(), List.of(), List.of()));
         try {
             Allure.step("Create user '" + fixture.user.username() + "' in auth DB",
                     () -> AuthUserRepository.createUser(fixture.user.username(), fixture.user.password()));
