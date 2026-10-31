@@ -2,6 +2,7 @@ package io.student.rangiffler.jupiter.extension;
 
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.UserFixture;
+import io.student.rangiffler.data.UserRequest;
 import io.student.rangiffler.jupiter.annotation.User;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -23,18 +24,18 @@ public final class UserExtension implements BeforeEachCallback, AfterEachCallbac
      */
     @Override
     public void beforeEach(ExtensionContext context) {
-        boolean needsUser = Arrays.stream(context.getRequiredTestMethod().getParameters())
-                .anyMatch(parameter -> parameter.isAnnotationPresent(User.class));
-        if (needsUser) {
-            context.getStore(NAMESPACE).put(context.getUniqueId(), UserFixture.create());
-        }
+        Arrays.stream(context.getRequiredTestMethod().getParameters())
+                .filter(parameter -> parameter.isAnnotationPresent(User.class))
+                .findFirst()
+                .map(parameter -> UserRequest.from(parameter.getAnnotation(User.class)))
+                .ifPresent(request -> context.getStore(NAMESPACE).put(context.getUniqueId(), request.fixture()));
     }
 
     /**
      * Closes the user fixture created for the test, if any.
      */
     @Override
-    public void afterEach(ExtensionContext context) throws Exception {
+    public void afterEach(ExtensionContext context) {
         UserFixture fixture = context.getStore(NAMESPACE).remove(context.getUniqueId(), UserFixture.class);
         if (fixture != null) {
             fixture.close();

@@ -4,11 +4,39 @@ import io.student.rangiffler.data.db.Databases;
 import io.student.rangiffler.data.db.Jdbc;
 
 /**
- * Removes test users from the rfr-api database.
+ * Creates and removes test users in the rfr-api database.
  */
 public final class ApiUserRepository {
 
     private ApiUserRepository() {
+    }
+
+    /**
+     * Creates the user profile with the default country, as rfr-api does lazily on first login.
+     */
+    public static void createProfile(String username) {
+        Jdbc.inTransaction(Databases.API, () -> Jdbc.requireOneRow(
+                Jdbc.client(Databases.API)
+                        .sql(Jdbc.sql("sql/api/create_profile.sql"))
+                        .param("username", username)
+                        .update(),
+                "create profile '" + username + "'"
+        ));
+    }
+
+    /**
+     * Creates a friendship between two existing profiles; the status is {@code ACCEPTED} or {@code PENDING}.
+     */
+    public static void createFriendship(String requester, String addressee, String status) {
+        Jdbc.inTransaction(Databases.API, () -> Jdbc.requireOneRow(
+                Jdbc.client(Databases.API)
+                        .sql(Jdbc.sql("sql/api/create_friendship.sql"))
+                        .param("requester", requester)
+                        .param("addressee", addressee)
+                        .param("status", status)
+                        .update(),
+                "create friendship '" + requester + "' -> '" + addressee + "'"
+        ));
     }
 
     /**
