@@ -1,7 +1,4 @@
-package io.student.rangiffler.data;
-
-import io.student.rangiffler.data.db.Databases;
-import io.student.rangiffler.data.db.Jdbc;
+package io.student.rangiffler.data.db;
 
 /**
  * Creates and removes test users in the rfr-api database.
@@ -25,15 +22,15 @@ public final class ApiUserRepository {
     }
 
     /**
-     * Creates a friendship between two existing profiles; the status is {@code ACCEPTED} or {@code PENDING}.
+     * Creates a friendship with the given status between two existing profiles.
      */
-    public static void createFriendship(String requester, String addressee, String status) {
+    public static void createFriendship(String requester, String addressee, FriendshipStatus status) {
         Jdbc.inTransaction(Databases.API, () -> Jdbc.requireOneRow(
                 Jdbc.client(Databases.API)
                         .sql(Jdbc.sql("sql/api/create_friendship.sql"))
                         .param("requester", requester)
                         .param("addressee", addressee)
-                        .param("status", status)
+                        .param("status", status.name())
                         .update(),
                 "create friendship '" + requester + "' -> '" + addressee + "'"
         ));

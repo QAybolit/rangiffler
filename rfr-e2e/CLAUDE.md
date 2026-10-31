@@ -10,7 +10,7 @@ One `src/test` source set, package `io.student.rangiffler`:
 |---|---|
 | `config` | `TestConfig`, the only place that reads settings |
 | `jupiter` | JUnit infrastructure: `annotation` (`@User`, `@BrowserLocale`), `extension` (`UserExtension`) |
-| `data` | Test data and its owners: `TestUser`, `UserFixture`, the repositories; `data/db` has `Databases` and `Jdbc` |
+| `data` | Test data and its owners: `TestUser`, `UserFixture` with its implementation and decorators, `UserRequest`; `data/db` has `Databases`, `Jdbc` and the repositories (`ApiUserRepository`, `AuthUserRepository`) |
 | `utils` | Stateless static helpers, e.g. `RandomDataUtils` |
 | `ui` | `page` (Page Objects) and `component` (shared page parts) |
 | `test` | `BaseWebTest` and the tests, grouped by feature (`auth`, `profile`, ...) |

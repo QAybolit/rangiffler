@@ -1,6 +1,8 @@
 package io.student.rangiffler.data;
 
 import io.qameta.allure.Allure;
+import io.student.rangiffler.data.db.ApiUserRepository;
+import io.student.rangiffler.data.db.FriendshipStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +29,8 @@ public final class UserWithFriendsFixture implements UserFixture {
             for (int index = 0; index < friends; index++) {
                 UserFixture friend = SingleUserFixture.create();
                 created.add(friend);
-                Allure.step("Create ACCEPTED friendship '" + origin.user().username() + "' -> '" + friend.user().username() + "'",
-                        () -> ApiUserRepository.createFriendship(origin.user().username(), friend.user().username(), "ACCEPTED"));
+                Allure.step("Create " + FriendshipStatus.ACCEPTED + " friendship '" + origin.user().username() + "' -> '" + friend.user().username() + "'",
+                        () -> ApiUserRepository.createFriendship(origin.user().username(), friend.user().username(), FriendshipStatus.ACCEPTED));
             }
             return new UserWithFriendsFixture(origin, created);
         } catch (RuntimeException | Error e) {

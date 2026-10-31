@@ -1,6 +1,8 @@
 package io.student.rangiffler.data;
 
 import io.qameta.allure.Allure;
+import io.student.rangiffler.data.db.ApiUserRepository;
+import io.student.rangiffler.data.db.FriendshipStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +29,8 @@ public final class UserWithIncomeInvitationsFixture implements UserFixture {
             for (int index = 0; index < invitations; index++) {
                 UserFixture inviter = SingleUserFixture.create();
                 created.add(inviter);
-                Allure.step("Create PENDING friendship '" + inviter.user().username() + "' -> '" + origin.user().username() + "'",
-                        () -> ApiUserRepository.createFriendship(inviter.user().username(), origin.user().username(), "PENDING"));
+                Allure.step("Create " + FriendshipStatus.PENDING + " friendship '" + inviter.user().username() + "' -> '" + origin.user().username() + "'",
+                        () -> ApiUserRepository.createFriendship(inviter.user().username(), origin.user().username(), FriendshipStatus.PENDING));
             }
             return new UserWithIncomeInvitationsFixture(origin, created);
         } catch (RuntimeException | Error e) {

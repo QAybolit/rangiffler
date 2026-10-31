@@ -1,7 +1,5 @@
-package io.student.rangiffler.data;
+package io.student.rangiffler.data.db;
 
-import io.student.rangiffler.data.db.Databases;
-import io.student.rangiffler.data.db.Jdbc;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 

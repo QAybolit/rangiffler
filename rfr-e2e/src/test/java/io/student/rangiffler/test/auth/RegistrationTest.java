@@ -2,8 +2,8 @@ package io.student.rangiffler.test.auth;
 
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import io.student.rangiffler.data.ApiUserRepository;
-import io.student.rangiffler.data.AuthUserRepository;
+import io.student.rangiffler.data.db.ApiUserRepository;
+import io.student.rangiffler.data.db.AuthUserRepository;
 import io.student.rangiffler.test.BaseWebTest;
 import io.student.rangiffler.ui.page.WelcomePage;
 import org.junit.jupiter.api.AfterEach;
