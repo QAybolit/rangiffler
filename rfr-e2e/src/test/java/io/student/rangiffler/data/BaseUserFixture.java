@@ -24,7 +24,7 @@ public final class BaseUserFixture implements UserFixture {
      * Creates a random user in the auth database and its profile in the api database, and cleans up if that fails.
      */
     public static BaseUserFixture create() {
-        BaseUserFixture fixture = new BaseUserFixture(new TestUser(randomUsername(), randomPassword(), List.of(), List.of()));
+        BaseUserFixture fixture = new BaseUserFixture(new TestUser(randomUsername(), randomPassword(), List.of(), List.of(), List.of()));
         try {
             Allure.step("Create user '" + fixture.user.username() + "' in auth DB",
                     () -> AuthUserRepository.createUser(fixture.user.username(), fixture.user.password()));

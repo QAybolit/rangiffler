@@ -27,7 +27,7 @@ public final class UserExtension implements BeforeEachCallback, AfterEachCallbac
         Arrays.stream(context.getRequiredTestMethod().getParameters())
                 .filter(parameter -> parameter.isAnnotationPresent(User.class))
                 .findFirst()
-                .map(parameter -> UserRequest.from(parameter.getAnnotation(User.class)))
+                .map(parameter -> new UserRequest(parameter.getAnnotation(User.class)))
                 .ifPresent(request -> context.getStore(NAMESPACE).put(context.getUniqueId(), request.fixture()));
     }
 

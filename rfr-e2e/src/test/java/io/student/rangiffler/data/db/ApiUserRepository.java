@@ -22,17 +22,17 @@ public final class ApiUserRepository {
     }
 
     /**
-     * Creates a friendship with the given status between two existing profiles.
+     * Creates the friendship between two existing profiles.
      */
-    public static void createFriendship(String requester, String addressee, FriendshipStatus status) {
+    public static void createFriendship(Friendship friendship) {
         Jdbc.inTransaction(Databases.API, () -> Jdbc.requireOneRow(
                 Jdbc.client(Databases.API)
                         .sql(Jdbc.sql("sql/api/create_friendship.sql"))
-                        .param("requester", requester)
-                        .param("addressee", addressee)
-                        .param("status", status.name())
+                        .param("requester", friendship.requester())
+                        .param("addressee", friendship.addressee())
+                        .param("status", friendship.status().name())
                         .update(),
-                "create friendship '" + requester + "' -> '" + addressee + "'"
+                "create friendship '" + friendship.requester() + "' -> '" + friendship.addressee() + "'"
         ));
     }
 

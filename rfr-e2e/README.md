@@ -37,7 +37,7 @@ TestConfig читает -Drfr.<ключ> → RFR_<КЛЮЧ> → значение
 |---|---|
 | config | TestConfig — единственная точка чтения настроек |
 | jupiter | всё про JUnit: annotation (@User, @ProbeTarget), extension (UserExtension; StandSchemaExtension — перед задачей e2e сверяет миграции, регистрируется через ServiceLoader), condition (ProbeTargetCondition — мишени probe-тестов выполняются только внутри EngineTestKit), probe |
-| data | тестовые данные и их владельцы: TestUser, UserFixture с реализацией BaseUserFixture и декораторами UserWithFriendsFixture, UserWithIncomeInvitationsFixture, UserRequest собирает их цепочку; db — Databases, Jdbc и неизменяемые объекты строк (Row/Rows: AuthAccount, ApiProfile, Friendship, Friendships), которые прячут весь SQL за create/delete/exists; Migrations сверяет схему БД с миграциями бэкенда через Flyway validate |
+| data | тестовые данные и их владельцы: TestUser, UserFixture с реализацией BaseUserFixture и декораторами UserWithFriendsFixture, UserWithIncomeInvitationsFixture, UserWithOutcomeInvitationsFixture, UserRequest собирает их цепочку; db — Databases, Jdbc и неизменяемые объекты строк (Row/Rows: AuthAccount, ApiProfile, Friendship, Friendships), которые прячут весь SQL за create/delete/exists; Migrations сверяет схему БД с миграциями бэкенда через Flyway validate |
 | utils | статические утилиты без состояния: RandomDataUtils — случайные username/password; сюда же будущие генераторы (описания фото и т.п.) |
 | ui | page — Page Objects, component — общие части страниц |
 | test | только тесты, по фичам: auth, profile, позже people, … |
