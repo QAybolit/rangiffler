@@ -19,6 +19,7 @@ public final class PeoplePage {
     private final Locator outcomeInvitationsTab;
     private final Locator searchInput;
     private final Locator rows;
+    private final Locator emptyState;
 
     public PeoplePage(Page page) {
         this.page = page;
@@ -28,29 +29,30 @@ public final class PeoplePage {
         this.outcomeInvitationsTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Outcome invitations"));
         this.searchInput = page.getByPlaceholder("Search people");
         this.rows = page.locator("tbody tr");
+        this.emptyState = page.getByText("There are no users yet");
     }
 
     @Step("Open 'Friends' tab")
     public PeoplePage openFriends() {
-        friendsTab.click();
+        open(friendsTab, "GetFriends");
         return this;
     }
 
     @Step("Open 'All People' tab")
     public PeoplePage openAllPeople() {
-        allPeopleTab.click();
+        open(allPeopleTab, "GetPeople");
         return this;
     }
 
     @Step("Open 'Income invitations' tab")
     public PeoplePage openIncomeInvitations() {
-        incomeInvitationsTab.click();
+        open(incomeInvitationsTab, "GetInvitations");
         return this;
     }
 
     @Step("Open 'Outcome invitations' tab")
     public PeoplePage openOutcomeInvitations() {
-        outcomeInvitationsTab.click();
+        open(outcomeInvitationsTab, "GetOutcomeInvitations");
         return this;
     }
 
@@ -64,12 +66,7 @@ public final class PeoplePage {
     @Step("Click 'Add' for '{username}' and wait for FriendshipAction mutation")
     public PeoplePage clickAdd(String username) {
         Locator addButton = row(username).getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Add"));
-        page.waitForResponse(
-                response -> response.url().endsWith("/graphql")
-                        && response.request().postData() != null
-                        && response.request().postData().contains("FriendshipAction"),
-                addButton::click
-        );
+        waitForOperation("FriendshipAction", addButton::click);
         return this;
     }
 
@@ -82,10 +79,48 @@ public final class PeoplePage {
         return this;
     }
 
+    @Step("Check that the table does not list the users {usernames}")
+    public PeoplePage shouldNotHaveUsers(String... usernames) {
+        for (String username : usernames) {
+            assertThat(row(username)).hasCount(0);
+        }
+        return this;
+    }
+
+    @Step("Check that '{username}' has the buttons {buttons}")
+    public PeoplePage shouldHaveButtons(String username, String... buttons) {
+        for (String button : buttons) {
+            assertThat(row(username).getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(button).setExact(true))).isVisible();
+        }
+        return this;
+    }
+
     @Step("Check that the invitation for '{username}' is waiting")
     public PeoplePage shouldHaveInvitationSent(String username) {
         assertThat(row(username).getByText("Waiting...")).isVisible();
         return this;
+    }
+
+    @Step("Check that the table is empty")
+    public PeoplePage shouldBeEmpty() {
+        assertThat(emptyState).isVisible();
+        assertThat(rows).hasCount(0);
+        return this;
+    }
+
+    private void open(Locator tab, String operation) {
+        if (!"true".equals(tab.getAttribute("aria-selected"))) {
+            waitForOperation(operation, () -> tab.click());
+        }
+    }
+
+    private void waitForOperation(String operation, Runnable action) {
+        page.waitForResponse(
+                response -> response.url().endsWith("/graphql")
+                        && response.request().postData() != null
+                        && response.request().postData().contains(operation),
+                action
+        );
     }
 
     private Locator row(String username) {
