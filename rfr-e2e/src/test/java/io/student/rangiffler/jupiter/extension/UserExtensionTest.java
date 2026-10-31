@@ -4,6 +4,8 @@ import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.UserFixture;
 import io.student.rangiffler.data.db.ApiUserRepository;
 import io.student.rangiffler.data.db.AuthUserRepository;
+import io.student.rangiffler.data.db.Friendship;
+import io.student.rangiffler.data.db.FriendshipStatus;
 import io.student.rangiffler.jupiter.annotation.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -94,12 +96,41 @@ class UserExtensionTest {
     @Test
     @DisplayName("@User on a parameter of another type fails the test with a parameter resolution error")
     void shouldFailTestWhenParameterTypeIsWrong() {
-        Throwable failure = run(WrongType.class).testEvents().failed().stream()
-                .map(event -> event.getRequiredPayload(TestExecutionResult.class).getThrowable().orElseThrow())
-                .findFirst()
-                .orElseThrow();
+        assertEquals(
+                ParameterResolutionException.class,
+                failure(run(WrongType.class)).getClass(),
+                "Test did not fail with a parameter resolution error"
+        );
+    }
 
-        assertEquals(ParameterResolutionException.class, failure.getClass(), "Test did not fail with a parameter resolution error");
+    @Test
+    @DisplayName("Outgoing invitation exists while the test runs and neither it nor the invited profile is left after")
+    void shouldRemoveOutcomeInvitationAndInvitedProfileAfterTest() {
+        EngineExecutionResults results = run(WithOutcomeInvitation.class);
+        String user = values(results, "store.before").getFirst();
+        String invitee = values(results, "invitee").getFirst();
+
+        assertEquals(
+                List.of("true", "false", existence(false)),
+                List.of(
+                        values(results, "friendship").getFirst(),
+                        String.valueOf(ApiUserRepository.friendshipExists(new Friendship(user, invitee, FriendshipStatus.PENDING))),
+                        existence(invitee)
+                ),
+                "Invitation was not created for the test or it or the invited profile was left after it"
+        );
+    }
+
+    @Test
+    @DisplayName("Negative outcomeInvitations fails with IllegalArgumentException before any user is created")
+    void shouldRejectNegativeOutcomeInvitationsBeforeCreatingUser() {
+        EngineExecutionResults results = run(NegativeOutcomeInvitations.class);
+
+        assertEquals(
+                List.of(IllegalArgumentException.class, List.of("absent")),
+                List.of(failure(results).getClass(), values(results, "store.after")),
+                "Negative count did not fail before the user was created"
+        );
     }
 
     @Test
@@ -125,6 +156,13 @@ class UserExtensionTest {
                 .selectors(selectClass(sample))
                 .configurationParameter("rfr.testkit", "true")
                 .execute();
+    }
+
+    private static Throwable failure(EngineExecutionResults results) {
+        return results.testEvents().failed().stream()
+                .map(event -> event.getRequiredPayload(TestExecutionResult.class).getThrowable().orElseThrow())
+                .findFirst()
+                .orElseThrow();
     }
 
     private static List<String> values(EngineExecutionResults results, String key) {
@@ -273,6 +311,33 @@ class UserExtensionTest {
 
         @Test
         void body(@User TestUser user) {
+        }
+    }
+
+    /**
+     * Sample test that reports the invited user and whether the pending invitation to it exists while the body runs.
+     */
+    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    static class WithOutcomeInvitation {
+
+        @Test
+        void body(@User(outcomeInvitations = 1) TestUser user, TestReporter reporter) {
+            String invitee = user.outcomeInvitations().getFirst().username();
+            reporter.publishEntry("invitee", invitee);
+            reporter.publishEntry("friendship", String.valueOf(
+                    ApiUserRepository.friendshipExists(new Friendship(user.username(), invitee, FriendshipStatus.PENDING))
+            ));
+        }
+    }
+
+    /**
+     * Sample test whose annotation asks for a negative number of outgoing invitations.
+     */
+    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    static class NegativeOutcomeInvitations {
+
+        @Test
+        void body(@User(outcomeInvitations = -1) TestUser user) {
         }
     }
 

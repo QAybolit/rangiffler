@@ -37,6 +37,19 @@ public final class ApiUserRepository {
     }
 
     /**
+     * Tells whether the friendship with exactly this requester, addressee and status exists.
+     */
+    public static boolean friendshipExists(Friendship friendship) {
+        return Jdbc.client(Databases.API)
+                .sql(Jdbc.sql("sql/api/exists_friendship.sql"))
+                .param("requester", friendship.requester())
+                .param("addressee", friendship.addressee())
+                .param("status", friendship.status().name())
+                .query(Integer.class)
+                .single() > 0;
+    }
+
+    /**
      * Tells whether a profile with the username exists.
      */
     public static boolean userExists(String username) {
