@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
 import java.util.Arrays;
@@ -20,11 +21,17 @@ public final class UsersQueueExtension implements BeforeEachCallback, AfterEachC
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(UsersQueueExtension.class);
 
     /**
-     * Takes the user when the test method has a {@code @StaticUser} parameter.
+     * Takes the user when the test method has a {@code @StaticUser} parameter and fails when it has more than one.
      */
     @Override
     public void beforeEach(ExtensionContext context) {
-        if (Arrays.stream(context.getRequiredTestMethod().getParameters()).anyMatch(parameter -> parameter.isAnnotationPresent(StaticUser.class))) {
+        long requested = Arrays.stream(context.getRequiredTestMethod().getParameters())
+                .filter(parameter -> parameter.isAnnotationPresent(StaticUser.class))
+                .count();
+        if (requested > 1) {
+            throw new IllegalStateException("Test method has " + requested + " @StaticUser parameters, only one is supported");
+        }
+        if (requested == 1) {
             context.getStore(NAMESPACE).put(context.getUniqueId(), StaticUserFixture.create());
         }
     }
@@ -50,10 +57,14 @@ public final class UsersQueueExtension implements BeforeEachCallback, AfterEachC
     }
 
     /**
-     * Returns the user taken for the current test.
+     * Returns the user taken for the current test and fails when the annotated parameter is not on the test method, where no user was taken.
      */
     @Override
     public TestUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
-        return extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), UserFixture.class).user();
+        UserFixture fixture = extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), UserFixture.class);
+        if (fixture == null) {
+            throw new ParameterResolutionException("@StaticUser is supported only on a parameter of the test method");
+        }
+        return fixture.user();
     }
 }

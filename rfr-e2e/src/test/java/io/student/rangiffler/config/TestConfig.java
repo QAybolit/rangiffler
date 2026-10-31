@@ -18,8 +18,6 @@ public final class TestConfig {
     private static final boolean HEADLESS = Boolean.parseBoolean(value("headless", "true"));
     private static final Locale BROWSER_LOCALE = Locale.forLanguageTag(value("browserLocale", "en-US"));
 
-    private static final Duration STATIC_USER_TIMEOUT = Duration.ofSeconds(Long.parseLong(value("staticUserTimeout", "30")));
-
     private TestConfig() {
     }
 
@@ -59,8 +57,21 @@ public final class TestConfig {
         return BROWSER_LOCALE;
     }
 
+    /**
+     * Returns how long to wait for a free pooled user; parsed on demand so a bad value breaks only the tests that use the pool.
+     */
     public static Duration staticUserTimeout() {
-        return STATIC_USER_TIMEOUT;
+        String raw = value("staticUserTimeout", "30");
+        long seconds;
+        try {
+            seconds = Long.parseLong(raw);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("rfr.staticUserTimeout must be a number of seconds, got '" + raw + "'", exception);
+        }
+        if (seconds < 1 || seconds > 3600) {
+            throw new IllegalArgumentException("rfr.staticUserTimeout must be from 1 to 3600 seconds, got " + seconds);
+        }
+        return Duration.ofSeconds(seconds);
     }
 
     /**
