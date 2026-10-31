@@ -34,6 +34,17 @@ public final class AuthUserRepository {
     }
 
     /**
+     * Tells whether a user with the username exists.
+     */
+    public static boolean userExists(String username) {
+        return Jdbc.client(Databases.AUTH)
+                .sql(Jdbc.sql("sql/auth/exists_user.sql"))
+                .param("username", username)
+                .query(Integer.class)
+                .single() > 0;
+    }
+
+    /**
      * Deletes the user and its authorities in one transaction.
      */
     public static void deleteUser(String username) {

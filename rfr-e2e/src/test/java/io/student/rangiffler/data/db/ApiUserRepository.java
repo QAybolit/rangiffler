@@ -37,6 +37,17 @@ public final class ApiUserRepository {
     }
 
     /**
+     * Tells whether a profile with the username exists.
+     */
+    public static boolean userExists(String username) {
+        return Jdbc.client(Databases.API)
+                .sql(Jdbc.sql("sql/api/exists_user.sql"))
+                .param("username", username)
+                .query(Integer.class)
+                .single() > 0;
+    }
+
+    /**
      * Deletes the user profile (created lazily by rfr-api on first login) together with its dependent rows.
      */
     public static void deleteUser(String username) {
