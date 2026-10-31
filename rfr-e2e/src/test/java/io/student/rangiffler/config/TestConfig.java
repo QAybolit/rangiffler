@@ -1,5 +1,6 @@
 package io.student.rangiffler.config;
 
+import java.time.Duration;
 import java.util.Locale;
 
 /**
@@ -16,6 +17,8 @@ public final class TestConfig {
     private static final String BROWSER = value("browser", "chromium");
     private static final boolean HEADLESS = Boolean.parseBoolean(value("headless", "true"));
     private static final Locale BROWSER_LOCALE = Locale.forLanguageTag(value("browserLocale", "en-US"));
+
+    private static final Duration STATIC_USER_TIMEOUT = Duration.ofSeconds(Long.parseLong(value("staticUserTimeout", "30")));
 
     private TestConfig() {
     }
@@ -54,6 +57,10 @@ public final class TestConfig {
 
     public static Locale browserLocale() {
         return BROWSER_LOCALE;
+    }
+
+    public static Duration staticUserTimeout() {
+        return STATIC_USER_TIMEOUT;
     }
 
     /**
