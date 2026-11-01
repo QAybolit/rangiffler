@@ -10,7 +10,7 @@ One `src/test` source set, package `io.student.rangiffler`:
 |---|---|
 | `config` | `TestConfig`, the only place that reads settings |
 | `jupiter` | JUnit infrastructure: `annotation` (`@User` with `friends`, `incomeInvitations`, `outcomeInvitations`), `extension` (`UserExtension`, and `UserExtensionTest`, which runs nested sample classes through EngineTestKit) |
-| `data` | Test data and its owners: `TestUser`, `UserFixture` with `BaseUserFixture` and the decorators `UserWithFriendsFixture`, `UserWithIncomeInvitationsFixture`, `UserWithOutcomeInvitationsFixture` (shared partner logic in `Partners`), `UserRequest`; `data/db` has `Databases`, `Jdbc` and the repositories (`ApiUserRepository`, `AuthUserRepository`), `Friendship` and `FriendshipStatus`; SQL files are in `src/test/resources/sql/{api,auth}` |
+| `data` | Test data and its owners: `TestUser`, `UserFixture` with `BaseUserFixture` and the decorator `UserWithRelationsFixture` with the `Relation` enum (shared partner logic in `Partners`), `UserRequest`; `data/db` has `Databases`, `Jdbc` and the repositories (`ApiUserRepository`, `AuthUserRepository`), `Friendship` and `FriendshipStatus`; SQL files are in `src/test/resources/sql/{api,auth}` |
 | `utils` | Stateless static helpers, e.g. `RandomDataUtils` |
 | `ui` | `page` (Page Objects) and `component` (shared page parts) |
 | `test` | `BaseWebTest` and the tests, grouped by feature (`auth`, `profile`, `people`, ...) |

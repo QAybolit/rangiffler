@@ -39,7 +39,7 @@ TestConfig читает -Drfr.<ключ> → RFR_<КЛЮЧ> → значение
 |---|---|
 | config | TestConfig — единственная точка чтения настроек |
 | jupiter | всё про JUnit: annotation (@User с friends, incomeInvitations, outcomeInvitations), extension (UserExtension создаёт фикстуру в beforeEach и закрывает в afterEach; UserExtensionTest проверяет её через EngineTestKit на классах-мишенях, которые выполняются только при параметре rfr.testkit=true) |
-| data | тестовые данные и их владельцы: TestUser, UserFixture с реализацией BaseUserFixture и декораторами UserWithFriendsFixture, UserWithIncomeInvitationsFixture, UserWithOutcomeInvitationsFixture (общую работу с партнёрами делает Partners); UserRequest создаётся из @User и собирает их цепочку методом fixture(); db — Databases, Jdbc, репозитории ApiUserRepository и AuthUserRepository (SQL лежит в resources/sql), Friendship и FriendshipStatus |
+| data | тестовые данные и их владельцы: TestUser, UserFixture с реализацией BaseUserFixture и декоратором UserWithRelationsFixture и перечислением Relation (общую работу с партнёрами делает Partners); UserRequest создаётся из @User и собирает их цепочку методом fixture(); db — Databases, Jdbc, репозитории ApiUserRepository и AuthUserRepository (SQL лежит в resources/sql), Friendship и FriendshipStatus |
 | utils | статические утилиты без состояния: RandomDataUtils — случайные username/password; сюда же будущие генераторы (описания фото и т.п.) |
 | ui | page — Page Objects, component — общие части страниц |
 | test | BaseWebTest и тесты по фичам: auth, profile, people (вкладки Friends, Income invitations, Outcome invitations) |

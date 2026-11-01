@@ -31,12 +31,21 @@ public record UserRequest(int friends, int incomeInvitations, int outcomeInvitat
      * Creates the fixture that satisfies this request.
      */
     public UserFixture fixture() {
-        return UserWithOutcomeInvitationsFixture.create(
-                UserWithIncomeInvitationsFixture.create(
-                        UserWithFriendsFixture.create(BaseUserFixture.create(), friends),
+        return with(
+                with(
+                        with(BaseUserFixture.create(), Relation.FRIEND, friends),
+                        Relation.INCOME_INVITATION,
                         incomeInvitations
                 ),
+                Relation.OUTCOME_INVITATION,
                 outcomeInvitations
         );
+    }
+
+    /**
+     * Wraps the origin with partners of the relation, or returns it unchanged when none are asked.
+     */
+    private static UserFixture with(UserFixture origin, Relation relation, int count) {
+        return count == 0 ? origin : UserWithRelationsFixture.create(origin, relation, count);
     }
 }

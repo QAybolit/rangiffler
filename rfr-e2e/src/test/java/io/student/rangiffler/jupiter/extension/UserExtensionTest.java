@@ -122,6 +122,42 @@ class UserExtensionTest {
     }
 
     @Test
+    @DisplayName("Accepted friendship exists while the test runs and neither it nor the friend profile is left after")
+    void shouldRemoveFriendshipAndFriendProfileAfterTest() {
+        EngineExecutionResults results = run(WithFriend.class);
+        String user = values(results, "store.before").getFirst();
+        String friend = values(results, "partner").getFirst();
+
+        assertEquals(
+                List.of("true", "false", existence(false)),
+                List.of(
+                        values(results, "friendship").getFirst(),
+                        String.valueOf(ApiUserRepository.friendshipExists(new Friendship(user, friend, FriendshipStatus.ACCEPTED))),
+                        existence(friend)
+                ),
+                "Friendship was not created for the test or it or the friend profile was left after it"
+        );
+    }
+
+    @Test
+    @DisplayName("Incoming invitation exists while the test runs and neither it nor the inviter profile is left after")
+    void shouldRemoveIncomeInvitationAndInviterProfileAfterTest() {
+        EngineExecutionResults results = run(WithIncomeInvitation.class);
+        String user = values(results, "store.before").getFirst();
+        String inviter = values(results, "partner").getFirst();
+
+        assertEquals(
+                List.of("true", "false", existence(false)),
+                List.of(
+                        values(results, "friendship").getFirst(),
+                        String.valueOf(ApiUserRepository.friendshipExists(new Friendship(inviter, user, FriendshipStatus.PENDING))),
+                        existence(inviter)
+                ),
+                "Invitation was not created for the test or it or the inviter profile was left after it"
+        );
+    }
+
+    @Test
     @DisplayName("Negative outcomeInvitations fails with IllegalArgumentException before any user is created")
     void shouldRejectNegativeOutcomeInvitationsBeforeCreatingUser() {
         EngineExecutionResults results = run(NegativeOutcomeInvitations.class);
@@ -326,6 +362,38 @@ class UserExtensionTest {
             reporter.publishEntry("invitee", invitee);
             reporter.publishEntry("friendship", String.valueOf(
                     ApiUserRepository.friendshipExists(new Friendship(user.username(), invitee, FriendshipStatus.PENDING))
+            ));
+        }
+    }
+
+    /**
+     * Sample test that reports the friend and whether the accepted friendship with it exists while the body runs.
+     */
+    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    static class WithFriend {
+
+        @Test
+        void body(@User(friends = 1) TestUser user, TestReporter reporter) {
+            String friend = user.friends().getFirst().username();
+            reporter.publishEntry("partner", friend);
+            reporter.publishEntry("friendship", String.valueOf(
+                    ApiUserRepository.friendshipExists(new Friendship(user.username(), friend, FriendshipStatus.ACCEPTED))
+            ));
+        }
+    }
+
+    /**
+     * Sample test that reports the inviter and whether the pending invitation from it exists while the body runs.
+     */
+    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    static class WithIncomeInvitation {
+
+        @Test
+        void body(@User(incomeInvitations = 1) TestUser user, TestReporter reporter) {
+            String inviter = user.incomeInvitations().getFirst().username();
+            reporter.publishEntry("partner", inviter);
+            reporter.publishEntry("friendship", String.valueOf(
+                    ApiUserRepository.friendshipExists(new Friendship(inviter, user.username(), FriendshipStatus.PENDING))
             ));
         }
     }

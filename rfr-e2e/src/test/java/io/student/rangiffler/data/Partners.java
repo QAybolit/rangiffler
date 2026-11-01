@@ -16,7 +16,7 @@ final class Partners {
     private final UserFixture origin;
     private final List<UserFixture> fixtures;
 
-    private Partners(UserFixture origin, List<UserFixture> fixtures) {
+    Partners(UserFixture origin, List<UserFixture> fixtures) {
         this.origin = origin;
         this.fixtures = fixtures;
     }
@@ -59,22 +59,21 @@ final class Partners {
      * Closes every fixture, the origin last, keeping the first failure and suppressing the rest.
      */
     private static void close(UserFixture origin, List<UserFixture> partners) {
-        RuntimeException failure = null;
-        List<UserFixture> all = new ArrayList<>(partners);
+        List<UserFixture> all = new ArrayList<>();
         all.add(origin);
-        for (UserFixture fixture : all) {
-            try {
-                fixture.close();
-            } catch (RuntimeException e) {
-                if (failure == null) {
-                    failure = e;
-                } else {
-                    failure.addSuppressed(e);
-                }
-            }
+        all.addAll(partners);
+        close(all, 0);
+    }
+
+    /**
+     * Closes the fixtures from the last to the one at {@code index}, relying on try-with-resources to close the rest after a failure and to suppress later ones.
+     */
+    private static void close(List<UserFixture> fixtures, int index) {
+        if (index == fixtures.size()) {
+            return;
         }
-        if (failure != null) {
-            throw failure;
+        try (UserFixture fixture = fixtures.get(index)) {
+            close(fixtures, index + 1);
         }
     }
 }
