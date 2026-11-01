@@ -35,7 +35,8 @@ public final class UserExtension implements BeforeEachCallback, AfterEachCallbac
         }
         requested.stream()
                 .findFirst()
-                .map(parameter -> new UserRequest(parameter.getAnnotation(User.class)))
+                .map(parameter -> parameter.getAnnotation(User.class))
+                .map(user -> new UserRequest(user.friends(), user.incomeInvitations(), user.outcomeInvitations()))
                 .ifPresent(request -> context.getStore(NAMESPACE).put(context.getUniqueId(), request.fixture()));
     }
 

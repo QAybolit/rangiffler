@@ -1,7 +1,5 @@
 package io.student.rangiffler.data;
 
-import io.student.rangiffler.jupiter.annotation.User;
-
 /**
  * What a test asks of its user: how many friends, incoming and outgoing invitations it must have.
  */
@@ -18,13 +16,6 @@ public record UserRequest(int friends, int incomeInvitations, int outcomeInvitat
                             + ", outcomeInvitations=" + outcomeInvitations
             );
         }
-    }
-
-    /**
-     * Reads the request from the {@code @User} annotation, so a new annotation attribute never touches the extension.
-     */
-    public UserRequest(User user) {
-        this(user.friends(), user.incomeInvitations(), user.outcomeInvitations());
     }
 
     /**
