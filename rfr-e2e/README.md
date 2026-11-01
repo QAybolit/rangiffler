@@ -31,6 +31,18 @@ TestConfig читает -Drfr.<ключ> → RFR_<КЛЮЧ> → значение
 | rfr.browserLocale | en-US |
 | rfr.staticUserTimeout | 30 (секунд ожидания свободного пользователя из пула) |
 
+## Статические пользователи
+
+Тест, которому нельзя создать пользователя на лету, получает параметр `@StaticUser TestUser`. UsersQueueExtension выдаёт ему одного из пользователей пула static-user-1, static-user-2, static-user-3 (пароль static-secret) и возвращает его после теста. Пул общий для JVM, ожидание свободного пользователя ограничено rfr.staticUserTimeout. Код этих пользователей не создаёт, а статические тесты должны только читать их данные: пользователи общие для всех тестов и запусков.
+
+Один раз создайте пользователей пула в обеих схемах (`rangiffler-auth` и `rangiffler-api`); скрипт можно запускать повторно:
+
+```bash
+docker exec -i rfr-mysql mysql -uroot -psecret < scripts/static-users.sql
+```
+
+Без пользователей тесты с @StaticUser падают на логине с «Bad credentials»; waitForStand их наличие не проверяет. Имена и пароль записаны и в StaticUserFixture, меняйте их в двух местах сразу. @StaticUser ставится только на параметр тестового метода, один раз на тест, а в каждый тестовый класс с ним добавляется @ExtendWith(UsersQueueExtension.class).
+
 ## Архитектура
 
 Один source set src/test, пакет io.student.rangiffler:
@@ -38,8 +50,8 @@ TestConfig читает -Drfr.<ключ> → RFR_<КЛЮЧ> → значение
 | Пакет | Что лежит |
 |---|---|
 | config | TestConfig — единственная точка чтения настроек |
-| jupiter | всё про JUnit: annotation (@User с friends, incomeInvitations, outcomeInvitations), extension (UserExtension создаёт фикстуру в beforeEach и закрывает в afterEach; UserExtensionTest проверяет её через EngineTestKit на классах-мишенях, которые выполняются только при параметре rfr.testkit=true) |
-| data | тестовые данные и их владельцы: TestUser, UserFixture с реализацией BaseUserFixture и декоратором UserWithRelationsFixture и перечислением Relation (общую работу с партнёрами делает Partners); UserRequest создаётся из @User и собирает их цепочку методом fixture(); db — Databases, Jdbc, репозитории ApiUserRepository и AuthUserRepository (SQL лежит в resources/sql), Friendship и FriendshipStatus |
+| jupiter | всё про JUnit: annotation (@User с friends, incomeInvitations, outcomeInvitations; @StaticUser), extension (UserExtension создаёт фикстуру в beforeEach и закрывает в afterEach; UsersQueueExtension выдаёт пользователя из пула для @StaticUser и возвращает его после теста; UserExtensionTest и UsersQueueExtensionTest проверяют их через EngineTestKit на классах-мишенях, которые выполняются только при параметре rfr.testkit=true) |
+| data | тестовые данные и их владельцы: TestUser, UserFixture с реализацией BaseUserFixture, декоратором UserWithRelationsFixture и перечислением Relation и StaticUserFixture (пул статических пользователей) (общую работу с партнёрами делает Partners); UserRequest получает от UserExtension счётчики из @User и собирает цепочку фикстур методом fixture(); db — Databases, Jdbc, репозитории ApiUserRepository и AuthUserRepository (SQL лежит в resources/sql), Friendship и FriendshipStatus |
 | utils | статические утилиты без состояния: RandomDataUtils — случайные username/password; сюда же будущие генераторы (описания фото и т.п.) |
 | ui | page — Page Objects, component — общие части страниц |
 | test | BaseWebTest и тесты по фичам: auth, profile, people (вкладки Friends, Income invitations, Outcome invitations) |
