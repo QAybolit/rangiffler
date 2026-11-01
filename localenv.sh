@@ -2,8 +2,10 @@
 
 cd "$(dirname "$0")" || exit 1
 
-if docker inspect rfr-mysql >/dev/null 2>&1 \
-  && [ -z "$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' rfr-mysql)" ]; then
+existing=$(docker ps -aq --filter 'name=^/rfr-mysql$')
+managed=$(docker ps -aq --filter 'name=^/rfr-mysql$' --filter 'label=com.docker.compose.project')
+
+if [ -n "$existing" ] && [ -z "$managed" ]; then
   echo '### Remove rfr-mysql created without docker compose (data stays in mysql-volume) ###'
   docker rm -f rfr-mysql
 fi
