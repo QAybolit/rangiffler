@@ -73,6 +73,19 @@ class UsersQueueExtensionTest {
     }
 
     @Test
+    @DisplayName("@StaticUser on a lifecycle method fails even when the test method has its own, and its user goes back to the pool")
+    void shouldFailWhenStaticUserSitsOnLifecycleMethodToo() {
+        assertEquals(
+                List.of(ParameterResolutionException.class, 1L),
+                List.of(
+                        failure(run(StaticUserOnLifecycleAndTestMethod.class)).getClass(),
+                        run(HoldsWholePool.class).testEvents().succeeded().count()
+                ),
+                "Lifecycle parameter silently shared the user or the user was not given back to the pool"
+        );
+    }
+
+    @Test
     @DisplayName("Giving a user back twice fails instead of putting it in the pool twice")
     void shouldFailWhenUserIsGivenBackTwice() {
         StaticUserFixture fixture = StaticUserFixture.create();
@@ -185,6 +198,21 @@ class UsersQueueExtensionTest {
 
         @Test
         void body() {
+        }
+    }
+
+    /**
+     * Sample test that asks for a pooled user both on a lifecycle method and on the test method.
+     */
+    @ExtendWith({UserExtensionTest.TestkitOnly.class, UsersQueueExtension.class})
+    static class StaticUserOnLifecycleAndTestMethod {
+
+        @BeforeEach
+        void setUp(@StaticUser TestUser user) {
+        }
+
+        @Test
+        void body(@StaticUser TestUser user) {
         }
     }
 }

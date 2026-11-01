@@ -7,6 +7,7 @@ import io.student.rangiffler.data.db.AuthUserRepository;
 import io.student.rangiffler.data.db.Friendship;
 import io.student.rangiffler.data.db.FriendshipStatus;
 import io.student.rangiffler.jupiter.annotation.User;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import org.junit.platform.testkit.engine.EngineTestKit;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
@@ -66,9 +68,9 @@ class UserExtensionTest {
         String username = values(results, "store.before").getFirst();
 
         assertEquals(
-                List.of(existence(true), existence(false)),
-                List.of(values(results, "inBody").getFirst(), existence(username)),
-                "User was not created for the failing test or was not removed after it"
+                List.of(existence(true), existence(false), "Sample failure of " + username),
+                List.of(values(results, "inBody").getFirst(), existence(username), failure(results).getMessage()),
+                "User was not created for the failing test, was not removed after it or the test did not fail as the sample does"
         );
     }
 
@@ -91,11 +93,16 @@ class UserExtensionTest {
     }
 
     @Test
-    @DisplayName("User is removed when @User sits on a parameter of another type")
+    @DisplayName("User exists before the test and is removed when @User sits on a parameter of another type")
     void shouldRemoveUserWhenParameterTypeIsWrong() {
-        String username = values(run(WrongType.class), "store.before").getFirst();
+        EngineExecutionResults results = run(WrongType.class);
+        String username = values(results, "store.before").getFirst();
 
-        assertEquals(existence(false), existence(username), "User was not removed after the unresolved parameter");
+        assertEquals(
+                List.of(existence(true), existence(false)),
+                List.of(values(results, "exists.before").getFirst(), existence(username)),
+                "User was not created for the unresolved parameter or was not removed after the test"
+        );
     }
 
     @Test
@@ -168,19 +175,48 @@ class UserExtensionTest {
         EngineExecutionResults results = run(NegativeOutcomeInvitations.class);
 
         assertEquals(
-                List.of(IllegalArgumentException.class, List.of("absent")),
-                List.of(failure(results).getClass(), values(results, "store.after")),
-                "Negative count did not fail before the user was created"
+                List.of(
+                        IllegalArgumentException.class,
+                        "User request counts cannot be negative: friends=0, incomeInvitations=0, outcomeInvitations=-1",
+                        List.of("absent")
+                ),
+                List.of(failure(results).getClass(), failure(results).getMessage(), values(results, "store.after")),
+                "Negative count did not fail for that reason before the user was created"
         );
     }
 
     @Test
-    @DisplayName("Two @User parameters of one test get the same user created from the first annotation")
-    void shouldGiveTwoUserParametersTheSameUser() {
+    @DisplayName("A test with two @User parameters fails before any user is created instead of sharing one user")
+    void shouldFailTestWithTwoUserParameters() {
+        EngineExecutionResults results = run(TwoUserParameters.class);
+
         assertEquals(
-                List.of("true,1"),
-                values(run(TwoUserParameters.class), "parameters"),
-                "Two @User parameters did not share the user created from the first annotation"
+                List.of("Test method has 2 @User parameters, only one is supported", List.of("absent")),
+                List.of(failure(results).getMessage(), values(results, "store.after")),
+                "Test with two @User parameters did not fail for that reason before the user was created"
+        );
+    }
+
+    @Test
+    @DisplayName("@User outside the test method fails with a parameter resolution error")
+    void shouldFailWhenUserIsNotOnTestMethod() {
+        assertEquals(
+                ParameterResolutionException.class,
+                failure(run(OnLifecycleMethod.class)).getClass(),
+                "@User on a lifecycle method did not fail with a parameter resolution error"
+        );
+    }
+
+    @Test
+    @DisplayName("@User on a lifecycle method fails even when the test method has its own, and that user is removed")
+    void shouldFailWhenUserSitsOnLifecycleMethodToo() {
+        EngineExecutionResults results = run(UserOnLifecycleAndTestMethod.class);
+        String username = values(results, "store.before").getFirst();
+
+        assertEquals(
+                List.of(ParameterResolutionException.class, existence(false)),
+                List.of(failure(results).getClass(), existence(username)),
+                "Lifecycle parameter silently shared the user or the user was left after the failure"
         );
     }
 
@@ -191,9 +227,9 @@ class UserExtensionTest {
         String username = values(results, "store.before").getFirst();
 
         assertEquals(
-                List.of(existence(true), existence(false)),
-                List.of(values(results, "inBody").getFirst(), existence(username)),
-                "User was not created for the test or was not removed after another callback failed"
+                List.of(existence(true), existence(false), "Sample after-each failure"),
+                List.of(values(results, "inBody").getFirst(), existence(username), failure(results).getMessage()),
+                "User was not created for the test, was not removed after another callback failed or that callback did not fail"
         );
     }
 
@@ -241,7 +277,7 @@ class UserExtensionTest {
     }
 
     /**
-     * Reports the username held in the extension's store before and after each test, so the outer test can see the fixture's lifecycle.
+     * Reports the username held in the extension's store before and after each test, and whether that user exists before the test, so the outer test can see the fixture's lifecycle.
      */
     static final class StoreProbe implements BeforeEachCallback, AfterEachCallback {
 
@@ -249,17 +285,18 @@ class UserExtensionTest {
 
         @Override
         public void beforeEach(ExtensionContext context) {
-            context.publishReportEntry("store.before", held(context));
+            context.publishReportEntry("store.before", held(context).orElse("absent"));
+            context.publishReportEntry("exists.before", held(context).map(username -> existence(username)).orElse("absent"));
         }
 
         @Override
         public void afterEach(ExtensionContext context) {
-            context.publishReportEntry("store.after", held(context));
+            context.publishReportEntry("store.after", held(context).orElse("absent"));
         }
 
-        private static String held(ExtensionContext context) {
-            UserFixture fixture = context.getStore(NAMESPACE).get(context.getUniqueId(), UserFixture.class);
-            return fixture == null ? "absent" : fixture.user().username();
+        private static Optional<String> held(ExtensionContext context) {
+            return Optional.ofNullable(context.getStore(NAMESPACE).get(context.getUniqueId(), UserFixture.class))
+                    .map(fixture -> fixture.user().username());
         }
     }
 
@@ -345,8 +382,37 @@ class UserExtensionTest {
     static class TwoUserParameters {
 
         @Test
-        void body(@User(friends = 1) TestUser first, @User(friends = 5) TestUser second, TestReporter reporter) {
-            reporter.publishEntry("parameters", first.username().equals(second.username()) + "," + second.friends().size());
+        void body(@User(friends = 1) TestUser first, @User(friends = 5) TestUser second) {
+        }
+    }
+
+    /**
+     * Sample test that asks for a user on a lifecycle method instead of the test method.
+     */
+    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    static class OnLifecycleMethod {
+
+        @BeforeEach
+        void setUp(@User TestUser user) {
+        }
+
+        @Test
+        void body() {
+        }
+    }
+
+    /**
+     * Sample test that asks for a user both on a lifecycle method and on the test method.
+     */
+    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    static class UserOnLifecycleAndTestMethod {
+
+        @BeforeEach
+        void setUp(@User TestUser user) {
+        }
+
+        @Test
+        void body(@User(friends = 2) TestUser user) {
         }
     }
 

@@ -8,9 +8,12 @@ import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
+import java.lang.reflect.Parameter;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Creates a {@code @User} test user before each test, passes it as a parameter and removes it afterwards.
@@ -20,12 +23,17 @@ public final class UserExtension implements BeforeEachCallback, AfterEachCallbac
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(UserExtension.class);
 
     /**
-     * Creates the user when the test method has a {@code @User} parameter.
+     * Creates the user when the test method has a {@code @User} parameter and fails before creating anything when it has more than one.
      */
     @Override
     public void beforeEach(ExtensionContext context) {
-        Arrays.stream(context.getRequiredTestMethod().getParameters())
+        List<Parameter> requested = Arrays.stream(context.getRequiredTestMethod().getParameters())
                 .filter(parameter -> parameter.isAnnotationPresent(User.class))
+                .toList();
+        if (requested.size() > 1) {
+            throw new IllegalStateException("Test method has " + requested.size() + " @User parameters, only one is supported");
+        }
+        requested.stream()
                 .findFirst()
                 .map(parameter -> new UserRequest(parameter.getAnnotation(User.class)))
                 .ifPresent(request -> context.getStore(NAMESPACE).put(context.getUniqueId(), request.fixture()));
@@ -52,10 +60,13 @@ public final class UserExtension implements BeforeEachCallback, AfterEachCallbac
     }
 
     /**
-     * Returns the user created for the current test.
+     * Returns the user created for the current test and fails when the annotated parameter belongs to another method than the test method, where it would silently share the test's user.
      */
     @Override
     public TestUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
+        if (!parameterContext.getDeclaringExecutable().equals(extensionContext.getRequiredTestMethod())) {
+            throw new ParameterResolutionException("@User is supported only on a parameter of the test method");
+        }
         return extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), UserFixture.class).user();
     }
 }

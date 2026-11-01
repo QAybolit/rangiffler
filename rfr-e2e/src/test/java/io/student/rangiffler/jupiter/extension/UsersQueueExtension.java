@@ -57,14 +57,13 @@ public final class UsersQueueExtension implements BeforeEachCallback, AfterEachC
     }
 
     /**
-     * Returns the user taken for the current test and fails when the annotated parameter is not on the test method, where no user was taken.
+     * Returns the user taken for the current test and fails when the annotated parameter belongs to another method than the test method, where it would silently share the test's user.
      */
     @Override
     public TestUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
-        UserFixture fixture = extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), UserFixture.class);
-        if (fixture == null) {
+        if (!parameterContext.getDeclaringExecutable().equals(extensionContext.getRequiredTestMethod())) {
             throw new ParameterResolutionException("@StaticUser is supported only on a parameter of the test method");
         }
-        return fixture.user();
+        return extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), UserFixture.class).user();
     }
 }
