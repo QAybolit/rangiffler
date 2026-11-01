@@ -60,11 +60,16 @@ class UserExtensionTest {
     }
 
     @Test
-    @DisplayName("User is removed even when the test fails")
+    @DisplayName("User exists while the test body runs and is removed even when the test fails")
     void shouldRemoveUserWhenTestFails() {
-        String username = values(run(FailingTest.class), "store.before").getFirst();
+        EngineExecutionResults results = run(FailingTest.class);
+        String username = values(results, "store.before").getFirst();
 
-        assertEquals(existence(false), existence(username), "User was not removed after the failed test");
+        assertEquals(
+                List.of(existence(true), existence(false)),
+                List.of(values(results, "inBody").getFirst(), existence(username)),
+                "User was not created for the failing test or was not removed after it"
+        );
     }
 
     @Test
@@ -180,11 +185,16 @@ class UserExtensionTest {
     }
 
     @Test
-    @DisplayName("User is removed even when another after-each callback fails")
+    @DisplayName("User exists while the test body runs and is removed even when another after-each callback fails")
     void shouldRemoveUserWhenAnotherAfterEachCallbackFails() {
-        String username = values(run(FailingAfterEachCallback.class), "store.before").getFirst();
+        EngineExecutionResults results = run(FailingAfterEachCallback.class);
+        String username = values(results, "store.before").getFirst();
 
-        assertEquals(existence(false), existence(username), "User was not removed after another callback failed");
+        assertEquals(
+                List.of(existence(true), existence(false)),
+                List.of(values(results, "inBody").getFirst(), existence(username)),
+                "User was not created for the test or was not removed after another callback failed"
+        );
     }
 
     private static EngineExecutionResults run(Class<?> sample) {
@@ -289,13 +299,14 @@ class UserExtensionTest {
     }
 
     /**
-     * Sample test that fails after its user is created.
+     * Sample test that reports whether its user exists and then fails.
      */
     @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
     static class FailingTest {
 
         @Test
-        void body(@User TestUser user) {
+        void body(@User TestUser user, TestReporter reporter) {
+            reporter.publishEntry("inBody", existence(user.username()));
             throw new IllegalStateException("Sample failure of " + user.username());
         }
     }
@@ -346,7 +357,8 @@ class UserExtensionTest {
     static class FailingAfterEachCallback {
 
         @Test
-        void body(@User TestUser user) {
+        void body(@User TestUser user, TestReporter reporter) {
+            reporter.publishEntry("inBody", existence(user.username()));
         }
     }
 
