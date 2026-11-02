@@ -16,6 +16,9 @@ public final class TestConfig {
     private static final String DB_PASSWORD = value("dbPassword", "secret");
     private static final String BROWSER = value("browser", "chromium");
     private static final boolean HEADLESS = Boolean.parseBoolean(value("headless", "true"));
+    private static final boolean MIGRATION_CHECK = Boolean.parseBoolean(value("migrationCheck", "false"));
+    private static final String AUTH_MIGRATIONS = value("authMigrations", "../rfr-auth/src/main/resources/db/migration/rangiffler-auth");
+    private static final String API_MIGRATIONS = value("apiMigrations", "../rfr-api/src/main/resources/db/migration/rangiffler-api");
     private static final Locale BROWSER_LOCALE = Locale.forLanguageTag(value("browserLocale", "en-US"));
 
     private TestConfig() {
@@ -51,6 +54,18 @@ public final class TestConfig {
 
     public static boolean headless() {
         return HEADLESS;
+    }
+
+    public static boolean migrationCheck() {
+        return MIGRATION_CHECK;
+    }
+
+    public static String authMigrations() {
+        return AUTH_MIGRATIONS;
+    }
+
+    public static String apiMigrations() {
+        return API_MIGRATIONS;
     }
 
     public static Locale browserLocale() {
