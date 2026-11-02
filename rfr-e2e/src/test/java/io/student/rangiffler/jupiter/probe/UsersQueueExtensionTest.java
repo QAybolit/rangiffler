@@ -1,8 +1,9 @@
-package io.student.rangiffler.jupiter.extension;
+package io.student.rangiffler.jupiter.probe;
 
 import io.student.rangiffler.data.StaticUserFixture;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.jupiter.annotation.StaticUser;
+import io.student.rangiffler.jupiter.extension.UsersQueueExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;

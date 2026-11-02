@@ -1,4 +1,4 @@
-package io.student.rangiffler.jupiter.extension;
+package io.student.rangiffler.jupiter.probe;
 
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.UserFixture;
@@ -7,6 +7,7 @@ import io.student.rangiffler.data.db.AuthUserRepository;
 import io.student.rangiffler.data.db.Friendship;
 import io.student.rangiffler.data.db.FriendshipStatus;
 import io.student.rangiffler.jupiter.annotation.User;
+import io.student.rangiffler.jupiter.extension.UserExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
