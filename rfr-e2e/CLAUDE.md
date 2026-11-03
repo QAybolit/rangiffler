@@ -11,6 +11,7 @@ One `src/test` source set, package `io.student.rangiffler`:
 | `config` | `TestConfig`, the only place that reads settings |
 | `jupiter` | JUnit infrastructure: `annotation` (`@User` with `friends`, `incomeInvitations`, `outcomeInvitations`; `@StaticUser`), `extension` (`UserExtension` creates a `@User` user; `UsersQueueExtension` lends a `@StaticUser` user from the pool; `SuiteExtension` with `SuiteRun` is the base of extensions of the whole run and `MigrationCheckExtension` is one of them; `DemoExtension`, `DemoValue` and `@Demo` serve the demo tests), `probe` (`UserExtensionTest`, `UsersQueueExtensionTest` and `SuiteExtensionTest` run nested sample classes through EngineTestKit) |
 | `data` | Test data and its owners: `TestUser`, `UserFixture` with `BaseUserFixture`, the decorator `UserWithRelationsFixture` with the `Relation` enum (shared partner logic in `Partners`) and `StaticUserFixture` (the pool of static users), `UserRequest`; `data/db` has `Databases`, `Jdbc`, `SchemaMigrations` and the repositories (`ApiUserRepository`, `AuthUserRepository`), `Friendship` and `FriendshipStatus`; SQL files are in `src/test/resources/sql/{api,auth}` |
+| `stand` | Waiting for the stand without JUnit: `StandService` with `TcpService` and `HttpService`, `StandReadiness`; `StandReadinessTest`, `TcpServiceTest` and `HttpServiceTest` check them on fake services |
 | `utils` | Stateless static helpers, e.g. `RandomDataUtils` |
 | `ui` | `page` (Page Objects) and `component` (shared page parts) |
 | `test` | `BaseWebTest` and the tests, grouped by feature (`auth`, `profile`, `people`, ...) and `demo`, which shows every place for `@ExtendWith` |
@@ -26,7 +27,7 @@ Every UI test class carries its own `@Tag("ui")` (it is not inherited from `Base
 ./gradlew :rfr-e2e:test                       # tests without the ui tag; no stand needed
 ./gradlew :rfr-e2e:test --tests '<TestClass>' # one test; with --tests the ui tag is not excluded
 ```
-`e2e` runs `waitForStand` first (`scripts/wait-for-stand.sh`), which waits for MySQL, `rfr-auth`, `rfr-api` and the frontend for up to `WAIT_TIMEOUT` seconds (default 180).
+The stand is awaited by `StandReadinessExtension` before the first class tagged `ui`, so both `e2e` and a UI test started from the IDE wait for it; there is no separate wait task.
 
 `UserExtensionTest` (tag `extension`) needs MySQL but no browser. Its nested sample classes are enabled only when the configuration parameter `rfr.testkit` is `true`, which the test sets itself, so they never run on their own.
 
@@ -38,17 +39,23 @@ Create the pooled users once in a fresh database, in both schemas (`rangiffler-a
 ```bash
 docker exec -i rfr-mysql mysql -uroot -psecret < scripts/static-users.sql
 ```
-If the users are missing, tests with `@StaticUser` fail at login with "Bad credentials"; `wait-for-stand.sh` does not check for them. The names and the password are also literals in `StaticUserFixture`, so change them in both places together.
+If the users are missing, tests with `@StaticUser` fail at login with "Bad credentials"; the stand wait does not check for them. The names and the password are also literals in `StaticUserFixture`, so change them in both places together.
 
 Use `@StaticUser` on a parameter of the test method only, once per test, and add `@ExtendWith(UsersQueueExtension.class)` to every test class that uses it.
 
 ## Suite extensions
 
-A `SuiteExtension` acts once per test run: `beforeSuite(ExtensionContext)` before the first test class, `afterSuite(ExtensionContext)` after the last one, both with the root context. `SuiteRun` is stored in the root `Store` before `beforeSuite` is called. If `beforeSuite` fails, it is not repeated, every class fails with the same cause, `afterSuite` is not called, and the failure is thrown again when the run closes. Several suite extensions start in registration order and close in reverse order. Register an implementation only through `ServiceLoader`: list it in `src/test/resources/META-INF/services/org.junit.jupiter.api.extension.Extension` (auto-detection is enabled in `junit-platform.properties`), never with `@ExtendWith`. It must be safe for any test of the project. `SuiteExtensionTest` (tag `extension`, no MySQL) checks these rules through EngineTestKit, treating the interface as a black box.
+A `SuiteExtension` acts once per test run: `beforeSuite(ExtensionContext)` before the first test class, `afterSuite(ExtensionContext)` after the last one, both with the root context. `SuiteRun` is stored in the root `Store` before `beforeSuite` is called. If `beforeSuite` fails, it is not repeated, every class fails with the same cause, `afterSuite` is not called, and the failure is thrown again when the run closes. Several suite extensions start in registration order and close in reverse order. `appliesTo(ExtensionContext)` (true by default) lets an extension start on the first class it applies to instead of the first class of the run. Register an implementation only through `ServiceLoader`: list it in `src/test/resources/META-INF/services/org.junit.jupiter.api.extension.Extension` (auto-detection is enabled in `junit-platform.properties`), never with `@ExtendWith`. It must be safe for any test of the project. `SuiteExtensionTest` (tag `extension`, no MySQL) checks these rules through EngineTestKit, treating the interface as a black box.
 
 ## Demo tests
 
 `test/demo` holds `DemoClassLevelTest` and `DemoExtendWithTest`. They show where `@ExtendWith` can be put (class, nested class, methods, parameters, field, composed annotation `@Demo`, superclass, interface) with `DemoExtension`, which implements all callbacks and a parameter resolver and prints the call order and the extension instance, so it is visible whether tests share it.
+
+## Stand readiness
+
+`StandReadinessExtension` is a `SuiteExtension` that applies only to classes tagged `ui` (`SuiteExtension.appliesTo`), so the run starts it on the first such class. It polls MySQL (TCP), `rfr-auth` (`GET /.well-known/openid-configuration`, status below 400), `rfr-api` (`POST /graphql`, any answer) and the frontend (`GET /`, status below 400) at the addresses from `TestConfig` every 2 s until all answer or `rfr.standTimeout` is over. Every request has its own timeout, nothing waits forever. On timeout the error names the silent services and the commands that start them (`docker compose up -d --wait`, `./gradlew runAll`, `cd rfr-gql-client && npm run dev`). Tests without the `ui` tag never start the wait, probes that need only MySQL included.
+
+It is listed above `MigrationCheckExtension` in `META-INF/services`, and the order is guaranteed: `ServiceLoader` returns providers in the order of the lines of a file, Jupiter registers auto-detected extensions in that order and calls `BeforeAllCallback` in the order of registration, and `SuiteRun.start()` is synchronized, so the migration check cannot begin before the wait has returned. If the wait fails, `beforeAll` of the class stops and the check does not run. `ServicesOrderTest` checks the order on the real `ServiceLoader`; `StandReadinessExtensionTest` runs `@ProbeTarget` sample classes against a fake HTTP server on an ephemeral port. A probe registers the extension with `@RegisterExtension` and its own settings, because the constructor is the only way to point it to a fake stand.
 
 ## Migration check
 
@@ -69,6 +76,8 @@ A `SuiteExtension` acts once per test run: `beforeSuite(ExtensionContext)` befor
 | `rfr.headless` | `true` | `false` shows the browser window |
 | `rfr.browserLocale` | `en-US` | Browser locale for all UI tests (set in `PlaywrightOptions`) |
 | `rfr.staticUserTimeout` | `30` | Seconds `StaticUserFixture` waits for a free pooled user before failing |
+| `rfr.standTimeout` | `180` | Seconds `StandReadinessExtension` waits for MySQL, `rfr-auth`, `rfr-api` and the frontend; every request has its own 5 s timeout |
+| `rfr.standCheck` | `true` | `false` turns the wait for the stand off completely |
 | `rfr.migrationCheck` | `false` | `true` makes `MigrationCheckExtension` compare the migrations applied to the local database with the files of `rfr-auth` and `rfr-api` before all tests; the `e2e` task sets it |
 | `rfr.authMigrations` / `rfr.apiMigrations` | `../rfr-*/src/main/resources/db/migration/...` | Migration directories of the backends; Gradle passes absolute paths |
 
