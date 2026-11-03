@@ -31,6 +31,7 @@ dependencies {
     testImplementation "io.qameta.allure:allure-playwright"
     testImplementation "com.microsoft.playwright:playwright:$playwrightVersion"
     testImplementation "net.datafaker:datafaker:$dataFakerVersion"
+    testImplementation "org.junit.platform:junit-platform-suite:$junitVersion"
 
     testImplementation "org.springframework:spring-jdbc"
     testImplementation "org.springframework.security:spring-security-crypto"
@@ -86,6 +87,8 @@ tasks.register('e2e', Test) {
     classpath = sourceSets.test.runtimeClasspath
     systemProperty 'rfr.migrationCheck', 'true'
     useJUnitPlatform {
+        includeEngines 'junit-platform-suite'
+        include '**/StandSchemaSuite.class'
         includeTags 'ui'
     }
     dependsOn waitForStand
