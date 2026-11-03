@@ -315,7 +315,8 @@ class UserExtensionTest {
     /**
      * Sample test that reports whether its user exists in both databases while the body runs.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class CreatesUser {
 
         @Test
@@ -327,7 +328,8 @@ class UserExtensionTest {
     /**
      * Sample test without a {@code @User} parameter.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class WithoutUser {
 
         @Test
@@ -339,7 +341,8 @@ class UserExtensionTest {
     /**
      * Sample test that reports whether its user exists and then fails.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class FailingTest {
 
         @Test
@@ -352,7 +355,8 @@ class UserExtensionTest {
     /**
      * Sample class with two tests that each ask for a user.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class TwoTests {
 
         @Test
@@ -367,7 +371,8 @@ class UserExtensionTest {
     /**
      * Sample test that reports how many friends and inviters its user has.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class WithRelations {
 
         @Test
@@ -379,7 +384,8 @@ class UserExtensionTest {
     /**
      * Sample test with two {@code @User} parameters that ask for different numbers of friends.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class TwoUserParameters {
 
         @Test
@@ -390,7 +396,8 @@ class UserExtensionTest {
     /**
      * Sample test that asks for a user on a lifecycle method instead of the test method.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class OnLifecycleMethod {
 
         @BeforeEach
@@ -405,7 +412,8 @@ class UserExtensionTest {
     /**
      * Sample test that asks for a user both on a lifecycle method and on the test method.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class UserOnLifecycleAndTestMethod {
 
         @BeforeEach
@@ -420,7 +428,8 @@ class UserExtensionTest {
     /**
      * Sample test whose after-each callback fails before the user is cleaned up.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class, FailingAfterEach.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class, FailingAfterEach.class})
     static class FailingAfterEachCallback {
 
         @Test
@@ -432,7 +441,8 @@ class UserExtensionTest {
     /**
      * Sample test that reports the invited user and whether the pending invitation to it exists while the body runs.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class WithOutcomeInvitation {
 
         @Test
@@ -448,7 +458,8 @@ class UserExtensionTest {
     /**
      * Sample test that reports the friend and whether the accepted friendship with it exists while the body runs.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class WithFriend {
 
         @Test
@@ -464,7 +475,8 @@ class UserExtensionTest {
     /**
      * Sample test that reports the inviter and whether the pending invitation from it exists while the body runs.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class WithIncomeInvitation {
 
         @Test
@@ -480,7 +492,8 @@ class UserExtensionTest {
     /**
      * Sample test whose annotation asks for a negative number of outgoing invitations.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class NegativeOutcomeInvitations {
 
         @Test
@@ -491,7 +504,8 @@ class UserExtensionTest {
     /**
      * Sample test with {@code @User} on a parameter the extension does not support.
      */
-    @ExtendWith({TestkitOnly.class, UserExtension.class, StoreProbe.class})
+    @ProbeTarget
+    @ExtendWith({UserExtension.class, StoreProbe.class})
     static class WrongType {
 
         @Test

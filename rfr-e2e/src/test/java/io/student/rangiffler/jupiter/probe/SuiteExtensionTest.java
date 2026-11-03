@@ -409,7 +409,8 @@ class SuiteExtensionTest {
     /**
      * Sample class with one passing test.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, Recording.class})
+    @ProbeTarget
+    @ExtendWith(Recording.class)
     static class First {
 
         @Test
@@ -421,7 +422,8 @@ class SuiteExtensionTest {
     /**
      * Second sample class with one passing test.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, Recording.class})
+    @ProbeTarget
+    @ExtendWith(Recording.class)
     static class Second {
 
         @Test
@@ -433,7 +435,8 @@ class SuiteExtensionTest {
     /**
      * Third sample class with one passing test.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, Recording.class})
+    @ProbeTarget
+    @ExtendWith(Recording.class)
     static class Third {
 
         @Test
@@ -445,7 +448,8 @@ class SuiteExtensionTest {
     /**
      * Sample class with a failing test.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, Recording.class})
+    @ProbeTarget
+    @ExtendWith(Recording.class)
     static class Failing {
 
         @Test
@@ -459,7 +463,8 @@ class SuiteExtensionTest {
      * Sample class that never starts, because it is disabled.
      */
     @Disabled
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, Recording.class})
+    @ProbeTarget
+    @ExtendWith(Recording.class)
     static class Skipped {
 
         @Test
@@ -471,7 +476,8 @@ class SuiteExtensionTest {
     /**
      * Sample class with a nested class.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, Recording.class})
+    @ProbeTarget
+    @ExtendWith(Recording.class)
     static class WithNested {
 
         @Test
@@ -492,7 +498,8 @@ class SuiteExtensionTest {
     /**
      * Sample class the tagged-only suite extension does not apply to.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, OnlyMarked.class})
+    @ProbeTarget
+    @ExtendWith(OnlyMarked.class)
     static class Unmarked {
 
         @Test
@@ -505,7 +512,8 @@ class SuiteExtensionTest {
      * First sample class the tagged-only suite extension applies to.
      */
     @Tag("marked")
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, OnlyMarked.class})
+    @ProbeTarget
+    @ExtendWith(OnlyMarked.class)
     static class MarkedFirst {
 
         @Test
@@ -518,7 +526,8 @@ class SuiteExtensionTest {
      * Second sample class the tagged-only suite extension applies to.
      */
     @Tag("marked")
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, OnlyMarked.class})
+    @ProbeTarget
+    @ExtendWith(OnlyMarked.class)
     static class MarkedSecond {
 
         @Test
@@ -530,7 +539,8 @@ class SuiteExtensionTest {
     /**
      * Sample class served by the suite extension that checks the context.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, RootProbe.class})
+    @ProbeTarget
+    @ExtendWith(RootProbe.class)
     static class RootContext {
 
         @Test
@@ -542,7 +552,8 @@ class SuiteExtensionTest {
     /**
      * Sample class served by two suite extensions.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, Recording.class, Other.class})
+    @ProbeTarget
+    @ExtendWith({Recording.class, Other.class})
     static class OrderedPair {
 
         @Test
@@ -554,7 +565,8 @@ class SuiteExtensionTest {
     /**
      * Sample class whose first suite extension fails to start.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, FailingStart.class, Other.class})
+    @ProbeTarget
+    @ExtendWith({FailingStart.class, Other.class})
     static class FailedThenOther {
 
         @Test
@@ -566,7 +578,8 @@ class SuiteExtensionTest {
     /**
      * Sample class whose second suite extension fails to start.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, Other.class, FailingStart.class})
+    @ProbeTarget
+    @ExtendWith({Other.class, FailingStart.class})
     static class OtherThenFailed {
 
         @Test
@@ -578,7 +591,8 @@ class SuiteExtensionTest {
     /**
      * Sample class whose second suite extension fails to finish.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, Other.class, FailingEnd.class})
+    @ProbeTarget
+    @ExtendWith({Other.class, FailingEnd.class})
     static class OtherThenFailingEnd {
 
         @Test
@@ -590,7 +604,8 @@ class SuiteExtensionTest {
     /**
      * Sample class served by the second suite extension only.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, Other.class})
+    @ProbeTarget
+    @ExtendWith(Other.class)
     static class OtherOnly {
 
         @Test
@@ -602,7 +617,8 @@ class SuiteExtensionTest {
     /**
      * First sample class whose suite extension fails to start.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, FailingStart.class})
+    @ProbeTarget
+    @ExtendWith(FailingStart.class)
     static class FailingStartFirst {
 
         @Test
@@ -614,7 +630,8 @@ class SuiteExtensionTest {
     /**
      * Second sample class whose suite extension fails to start.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, FailingStart.class})
+    @ProbeTarget
+    @ExtendWith(FailingStart.class)
     static class FailingStartSecond {
 
         @Test
@@ -626,7 +643,8 @@ class SuiteExtensionTest {
     /**
      * First sample class whose suite extension fails to finish.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, FailingEnd.class})
+    @ProbeTarget
+    @ExtendWith(FailingEnd.class)
     static class FailingEndFirst {
 
         @Test
@@ -638,7 +656,8 @@ class SuiteExtensionTest {
     /**
      * Second sample class whose suite extension fails to finish.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, FailingEnd.class})
+    @ProbeTarget
+    @ExtendWith(FailingEnd.class)
     static class FailingEndSecond {
 
         @Test

@@ -126,7 +126,8 @@ class UsersQueueExtensionTest {
     /**
      * Sample class with more tests than the pool has users.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, UsersQueueExtension.class})
+    @ProbeTarget
+    @ExtendWith(UsersQueueExtension.class)
     static class FourTests {
 
         @Test
@@ -149,7 +150,8 @@ class UsersQueueExtensionTest {
     /**
      * Sample test that fails while it holds a pooled user.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, UsersQueueExtension.class})
+    @ProbeTarget
+    @ExtendWith(UsersQueueExtension.class)
     static class FailingTest {
 
         @Test
@@ -161,7 +163,7 @@ class UsersQueueExtensionTest {
     /**
      * Sample test that takes every user of the pool at once, so it passes only if none was lost earlier.
      */
-    @ExtendWith(UserExtensionTest.TestkitOnly.class)
+    @ProbeTarget
     static class HoldsWholePool {
 
         @Test
@@ -179,7 +181,8 @@ class UsersQueueExtensionTest {
     /**
      * Sample test that asks for two pooled users.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, UsersQueueExtension.class})
+    @ProbeTarget
+    @ExtendWith(UsersQueueExtension.class)
     static class TwoStaticUsers {
 
         @Test
@@ -190,7 +193,8 @@ class UsersQueueExtensionTest {
     /**
      * Sample test that asks for a pooled user on a lifecycle method instead of the test method.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, UsersQueueExtension.class})
+    @ProbeTarget
+    @ExtendWith(UsersQueueExtension.class)
     static class OnLifecycleMethod {
 
         @BeforeEach
@@ -205,7 +209,8 @@ class UsersQueueExtensionTest {
     /**
      * Sample test that asks for a pooled user both on a lifecycle method and on the test method.
      */
-    @ExtendWith({UserExtensionTest.TestkitOnly.class, UsersQueueExtension.class})
+    @ProbeTarget
+    @ExtendWith(UsersQueueExtension.class)
     static class StaticUserOnLifecycleAndTestMethod {
 
         @BeforeEach
