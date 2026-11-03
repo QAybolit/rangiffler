@@ -16,6 +16,7 @@ public final class TestConfig {
     private static final String DB_PASSWORD = value("dbPassword", "secret");
     private static final String BROWSER = value("browser", "chromium");
     private static final boolean HEADLESS = Boolean.parseBoolean(value("headless", "true"));
+    private static final boolean STAND_CHECK = Boolean.parseBoolean(value("standCheck", "true"));
     private static final boolean MIGRATION_CHECK = Boolean.parseBoolean(value("migrationCheck", "false"));
     private static final String AUTH_MIGRATIONS = value("authMigrations", "../rfr-auth/src/main/resources/db/migration/rangiffler-auth");
     private static final String API_MIGRATIONS = value("apiMigrations", "../rfr-api/src/main/resources/db/migration/rangiffler-api");
@@ -76,15 +77,30 @@ public final class TestConfig {
      * Returns how long to wait for a free pooled user; parsed on demand so a bad value breaks only the tests that use the pool.
      */
     public static Duration staticUserTimeout() {
-        String raw = value("staticUserTimeout", "30");
+        return seconds("staticUserTimeout", "30");
+    }
+
+    /**
+     * Returns how long to wait for the stand to come up; parsed on demand so a bad value breaks only the runs that wait for the stand.
+     */
+    public static Duration standTimeout() {
+        return seconds("standTimeout", "180");
+    }
+
+    public static boolean standCheck() {
+        return STAND_CHECK;
+    }
+
+    private static Duration seconds(String key, String defaultValue) {
+        String raw = value(key, defaultValue);
         long seconds;
         try {
             seconds = Long.parseLong(raw);
         } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("rfr.staticUserTimeout must be a number of seconds, got '" + raw + "'", exception);
+            throw new IllegalArgumentException("rfr." + key + " must be a number of seconds, got '" + raw + "'", exception);
         }
         if (seconds < 1 || seconds > 3600) {
-            throw new IllegalArgumentException("rfr.staticUserTimeout must be from 1 to 3600 seconds, got " + seconds);
+            throw new IllegalArgumentException("rfr." + key + " must be from 1 to 3600 seconds, got " + seconds);
         }
         return Duration.ofSeconds(seconds);
     }
