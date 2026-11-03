@@ -9,7 +9,7 @@ One `src/test` source set, package `io.student.rangiffler`:
 | Package | Contents |
 |---|---|
 | `config` | `TestConfig`, the only place that reads settings |
-| `jupiter` | JUnit infrastructure: `annotation` (`@User` with `friends`, `incomeInvitations`, `outcomeInvitations`; `@StaticUser`), `extension` (`UserExtension` creates a `@User` user; `UsersQueueExtension` lends a `@StaticUser` user from the pool; `SuiteExtension` with `SuiteRun` is the base of extensions of the whole run and `MigrationCheckListener` is one of them; `DemoExtension`, `DemoValue` and `@Demo` serve the demo tests), `probe` (`UserExtensionTest`, `UsersQueueExtensionTest` and `SuiteExtensionTest` run nested sample classes through EngineTestKit) |
+| `jupiter` | JUnit infrastructure: `annotation` (`@User` with `friends`, `incomeInvitations`, `outcomeInvitations`; `@StaticUser`), `extension` (`UserExtension` creates a `@User` user; `UsersQueueExtension` lends a `@StaticUser` user from the pool; `SuiteExtension` with `SuiteRun` is the base of extensions of the whole run and `MigrationCheckExtension` is one of them; `DemoExtension`, `DemoValue` and `@Demo` serve the demo tests), `probe` (`UserExtensionTest`, `UsersQueueExtensionTest` and `SuiteExtensionTest` run nested sample classes through EngineTestKit) |
 | `data` | Test data and its owners: `TestUser`, `UserFixture` with `BaseUserFixture`, the decorator `UserWithRelationsFixture` with the `Relation` enum (shared partner logic in `Partners`) and `StaticUserFixture` (the pool of static users), `UserRequest`; `data/db` has `Databases`, `Jdbc`, `SchemaMigrations` and the repositories (`ApiUserRepository`, `AuthUserRepository`), `Friendship` and `FriendshipStatus`; SQL files are in `src/test/resources/sql/{api,auth}` |
 | `utils` | Stateless static helpers, e.g. `RandomDataUtils` |
 | `ui` | `page` (Page Objects) and `component` (shared page parts) |
@@ -52,7 +52,7 @@ A `SuiteExtension` acts once per test run: `beforeSuite(ExtensionContext)` befor
 
 ## Migration check
 
-`MigrationCheckListener` is a `SuiteExtension` listed in `META-INF/services`, so it runs once before all tests of a run, but only with `rfr.migrationCheck=true` (the `e2e` task sets it). It uses Flyway read-only (`SchemaMigrations`) and fails the run when the schema has migrations the backend files lack, the files have migrations the schema lacks, or a checksum differs. It compares the database with the checkout, not with the running process, so restart the backends after switching a branch. The error names the differences and the way out: switch the backends to the branch that migrated the database, or recreate it (`docker compose down -v`, then `bash localenv.sh`) and restart `rfr-auth` and `rfr-api`.
+`MigrationCheckExtension` is a `SuiteExtension` listed in `META-INF/services`, so it runs once before all tests of a run, but only with `rfr.migrationCheck=true` (the `e2e` task sets it). It uses Flyway read-only (`SchemaMigrations`) and fails the run when the schema has migrations the backend files lack, the files have migrations the schema lacks, or a checksum differs. It compares the database with the checkout, not with the running process, so restart the backends after switching a branch. The error names the differences and the way out: switch the backends to the branch that migrated the database, or recreate it (`docker compose down -v`, then `bash localenv.sh`) and restart `rfr-auth` and `rfr-api`.
 
 ## Test settings
 
@@ -69,7 +69,7 @@ A `SuiteExtension` acts once per test run: `beforeSuite(ExtensionContext)` befor
 | `rfr.headless` | `true` | `false` shows the browser window |
 | `rfr.browserLocale` | `en-US` | Browser locale for all UI tests (set in `PlaywrightOptions`) |
 | `rfr.staticUserTimeout` | `30` | Seconds `StaticUserFixture` waits for a free pooled user before failing |
-| `rfr.migrationCheck` | `false` | `true` makes `MigrationCheckListener` compare the migrations applied to the local database with the files of `rfr-auth` and `rfr-api` before all tests; the `e2e` task sets it |
+| `rfr.migrationCheck` | `false` | `true` makes `MigrationCheckExtension` compare the migrations applied to the local database with the files of `rfr-auth` and `rfr-api` before all tests; the `e2e` task sets it |
 | `rfr.authMigrations` / `rfr.apiMigrations` | `../rfr-*/src/main/resources/db/migration/...` | Migration directories of the backends; Gradle passes absolute paths |
 
 `rfr-e2e/build.gradle` forwards every `-Drfr.*` argument to the test JVM, and environment variables reach it by default, so pass a setting either way:

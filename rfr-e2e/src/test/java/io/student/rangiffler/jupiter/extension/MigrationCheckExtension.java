@@ -3,26 +3,29 @@ package io.student.rangiffler.jupiter.extension;
 import io.student.rangiffler.config.TestConfig;
 import io.student.rangiffler.data.db.Databases;
 import io.student.rangiffler.data.db.SchemaMigrations;
-import org.junit.platform.launcher.LauncherSession;
-import org.junit.platform.launcher.LauncherSessionListener;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class MigrationCheckListener implements LauncherSessionListener {
+/**
+ * Stops the test run before any test when the local database schemas were migrated by other backend code than the one in this checkout.
+ */
+public final class MigrationCheckExtension implements SuiteExtension {
 
+    /**
+     * Checks both schemas and fails with the differences and a way out; it does nothing unless {@code rfr.migrationCheck} is true.
+     */
     @Override
-    public void launcherSessionOpened(LauncherSession session) {
-        System.out.println("LAUNCHER START");
+    public void beforeSuite(ExtensionContext context) {
         if (!TestConfig.migrationCheck()) {
             return;
         }
-        System.out.println("LAUNCHER CHECK");
         List<String> problems = new ArrayList<>();
         new SchemaMigrations(Databases.AUTH.dataSource(), "rangiffler-auth", Path.of(TestConfig.authMigrations()))
                 .problems().forEach(problem -> problems.add("rangiffler-auth: " + problem));
-        new SchemaMigrations(Databases.API.dataSource(), "rangiffler-ap", Path.of(TestConfig.apiMigrations()))
+        new SchemaMigrations(Databases.API.dataSource(), "rangiffler-api", Path.of(TestConfig.apiMigrations()))
                 .problems().forEach(problem -> problems.add("rangiffler-api: " + problem));
         if (!problems.isEmpty()) {
             throw new IllegalStateException(

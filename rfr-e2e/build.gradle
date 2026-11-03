@@ -41,7 +41,7 @@ dependencies {
 
     testImplementation "org.junit.jupiter:junit-jupiter"
     testImplementation "org.junit.platform:junit-platform-testkit"
-    testImplementation "org.junit.platform:junit-platform-launcher"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testRuntimeOnly "org.aspectj:aspectjrt:$aspectJVersion"
 }
 
@@ -60,8 +60,6 @@ tasks.withType(Test).configureEach {
     environment 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', '1'
     jvmArgumentProviders.add({ ["-javaagent:${configurations.agent.singleFile}"] } as CommandLineArgumentProvider)
     outputs.upToDateWhen { false }
-    testLogging { showStandardStreams = true }
-    maxParallelForks = 1
 }
 
 test {
