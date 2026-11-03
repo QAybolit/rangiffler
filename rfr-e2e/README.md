@@ -32,6 +32,7 @@ TestConfig читает -Drfr.<ключ> → RFR_<КЛЮЧ> → значение
 | rfr.staticUserTimeout | 30 (секунд ожидания свободного пользователя из пула) |
 | rfr.standTimeout | 180 (секунд ожидания стенда; каждый запрос ограничен 5 секундами) |
 | rfr.standCheck | true (false выключает ожидание стенда совсем) |
+| rfr.commit | unknown (короткий хеш коммита для окружения Allure; его передаёт Gradle, тесты git не запускают) |
 | rfr.migrationCheck | false (true включает проверку миграций перед всеми тестами; задача e2e включает её сама) |
 | rfr.authMigrations / rfr.apiMigrations | ../rfr-auth/... и ../rfr-api/... (каталоги миграций бэкендов; Gradle передаёт абсолютные пути) |
 
@@ -54,6 +55,14 @@ SuiteExtension — интерфейс расширения, которое ср�
 Реализации SuiteExtension регистрируются глобально через ServiceLoader: класс перечисляется в `src/test/resources/META-INF/services/org.junit.jupiter.api.extension.Extension`, автообнаружение включено в junit-platform.properties. Через @ExtendWith такое расширение не подключают. Расширение должно безопасно вызываться для любого теста проекта.
 
 SuiteExtensionTest проверяет это через EngineTestKit, не опираясь на реализацию интерфейса (тег extension, MySQL не нужен).
+
+### Окружение в отчёте Allure
+
+AllureEnvironmentExtension (SuiteExtension) в afterSuite пишет environment.properties в каталог результатов Allure: frontUrl, authUrl, apiUrl, dbUrl, browser, headless, commit и текущую версию миграций каждой схемы из Flyway (authSchemaVersion, apiSchemaVersion). Каталог задаёт системное свойство allure.results.directory, по умолчанию build/allure-results (в каталоге модуля), туда пишет и адаптер Allure. Если версию схемы прочитать нельзя, например MySQL выключена, в файле стоит unavailable; версии читаются отдельным подключением с таймаутом соединения 2 секунды, поэтому конец прогона не зависает. Сбой записи файла печатается в поток ошибок и прогон не роняет: файл нужен только для отчёта. Файл пишется атомарно, поэтому параллельные процессы не оставят недописанный.
+
+Allure 3 показывает environment.properties только в блоке Metadata на главной странице отчёта. Блок Variables и вкладки окружений строятся из allurerc.mjs, поэтому rfr-e2e/allurerc.mjs читает тот же файл из build/allure-results (или из ALLURE_RESULTS_DIR) и передаёт его пары в опцию variables. Вкладке Environments нужно объявленное окружение, иначе она пишет «No environments information available», поэтому конфиг объявляет окружение local («Local stand») с матчером, который принимает все результаты, и теми же variables. Классы-мишени проб (@ProbeTarget) несут тег probe, и задача e2e его исключает: им нужен тег ui для StandReadinessExtension, а без исключения они попадали бы в прогон e2e как пропущенные тесты. Gradle-плагин Allure сам по себе игнорирует allurerc.mjs и передаёт CLI свой сгенерированный allurerc.json, поэтому в build.gradle задан allure.report.configFile на этот файл. Конфиг ничего не импортирует (пакет allure из каталога модуля не найти) и не задаёт output, потому что плагин передаёт --output.
+
+Расширение стоит в META-INF/services первым. Это нужно из-за поведения JUnit: если расширение упало в beforeAll, следующие за ним в этом классе не стартуют и не закрываются, поэтому расширение после StandReadinessExtension не оставило бы файл именно тогда, когда стенд выключен. Закрываются расширения в обратном порядке, поэтому это закрывается последним, после остальных. Порядок проверяет ServicesOrderTest, а AllureEnvironmentExtensionTest запускает мишени в обоих порядках.
 
 ### Ожидание стенда
 
@@ -78,7 +87,8 @@ MigrationCheckExtension перед всеми тестами сравнивае�
 | config | TestConfig — единственная точка чтения настроек |
 | jupiter | всё про JUnit: annotation (@User с friends, incomeInvitations, outcomeInvitations; @StaticUser), extension (UserExtension создаёт фикстуру в beforeEach и закрывает в afterEach; UsersQueueExtension выдаёт пользователя из пула для @StaticUser и возвращает его после теста; SuiteExtension с SuiteRun и MigrationCheckExtension работают на весь прогон; DemoExtension с DemoValue и аннотация Demo нужны демонстрационным тестам), probe (UserExtensionTest, UsersQueueExtensionTest и SuiteExtensionTest проверяют расширения через EngineTestKit на классах-мишенях, которые выполняются только при параметре rfr.testkit=true) |
 | data | тестовые данные и их владельцы: TestUser, UserFixture с реализацией BaseUserFixture, декоратором UserWithRelationsFixture и перечислением Relation и StaticUserFixture (пул статических пользователей) (общую работу с партнёрами делает Partners); UserRequest получает от UserExtension счётчики из @User и собирает цепочку фикстур методом fixture(); db — Databases, Jdbc, SchemaMigrations (сравнение миграций БД с файлами бэкенда), репозитории ApiUserRepository и AuthUserRepository (SQL лежит в resources/sql), Friendship и FriendshipStatus |
-| stand | ожидание стенда без JUnit: StandService с реализациями TcpService и HttpService, StandReadiness; проверяют StandReadinessTest, TcpServiceTest и HttpServiceTest на подставных сервисах |
+| jupiter/allure | EnvironmentFile — environment.properties каталога результатов Allure |
+| jupiter/stand | ожидание стенда без JUnit: StandService с реализациями TcpService и HttpService, StandReadiness; проверяют StandReadinessTest, TcpServiceTest и HttpServiceTest на подставных сервисах |
 | utils | статические утилиты без состояния: RandomDataUtils — случайные username/password; сюда же будущие генераторы (описания фото и т.п.) |
 | ui | page — Page Objects, component — общие части страниц |
 | test | BaseWebTest и тесты по фичам: auth, profile, people (вкладки Friends, Income invitations, Outcome invitations), demo (демонстрация @ExtendWith) |
