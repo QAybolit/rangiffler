@@ -50,9 +50,24 @@ allure {
     adapter {
         autoconfigure.set(false)
     }
+    report {
+        configFile = file('allurerc.mjs')
+    }
 }
 
+def commit = {
+    try {
+        providers.exec {
+            commandLine 'git', 'rev-parse', '--short', 'HEAD'
+            ignoreExitValue = true
+        }.standardOutput.asText.get().trim() ?: 'unknown'
+    } catch (Exception ignored) {
+        'unknown'
+    }
+}()
+
 tasks.withType(Test).configureEach {
+    systemProperty 'rfr.commit', commit
     systemProperty 'rfr.authMigrations', rootProject.file('rfr-auth/src/main/resources/db/migration/rangiffler-auth').absolutePath
     systemProperty 'rfr.apiMigrations', rootProject.file('rfr-api/src/main/resources/db/migration/rangiffler-api').absolutePath
     systemProperties System.getProperties().findAll { key, value -> key.toString().startsWith('rfr.') }
@@ -80,6 +95,7 @@ tasks.register('e2e', Test) {
     systemProperty 'rfr.migrationCheck', 'true'
     useJUnitPlatform {
         includeTags 'ui'
+        excludeTags 'probe'
     }
 }
 

@@ -1,5 +1,6 @@
 package io.student.rangiffler.config;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Locale;
 
@@ -17,6 +18,8 @@ public final class TestConfig {
     private static final String BROWSER = value("browser", "chromium");
     private static final boolean HEADLESS = Boolean.parseBoolean(value("headless", "true"));
     private static final boolean STAND_CHECK = Boolean.parseBoolean(value("standCheck", "true"));
+    private static final String COMMIT = value("commit", "unknown");
+    private static final Path ALLURE_RESULTS = Path.of(System.getProperty("allure.results.directory", "build/allure-results"));
     private static final boolean MIGRATION_CHECK = Boolean.parseBoolean(value("migrationCheck", "false"));
     private static final String AUTH_MIGRATIONS = value("authMigrations", "../rfr-auth/src/main/resources/db/migration/rangiffler-auth");
     private static final String API_MIGRATIONS = value("apiMigrations", "../rfr-api/src/main/resources/db/migration/rangiffler-api");
@@ -55,6 +58,14 @@ public final class TestConfig {
 
     public static boolean headless() {
         return HEADLESS;
+    }
+
+    public static String commit() {
+        return COMMIT;
+    }
+
+    public static Path allureResults() {
+        return ALLURE_RESULTS;
     }
 
     public static boolean migrationCheck() {

@@ -1,5 +1,6 @@
 package io.student.rangiffler.jupiter.probe;
 
+import io.student.rangiffler.jupiter.extension.AllureEnvironmentExtension;
 import io.student.rangiffler.jupiter.extension.MigrationCheckExtension;
 import io.student.rangiffler.jupiter.extension.StandReadinessExtension;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +27,20 @@ class ServicesOrderTest {
         assertTrue(
                 readiness >= 0 && readiness < found.indexOf(MigrationCheckExtension.class.getName()),
                 "The migration check is found before the wait for the stand or one of them is not registered"
+        );
+    }
+
+    @Test
+    @DisplayName("AllureEnvironmentExtension comes first, so no later extension can keep it from starting")
+    void shouldStartEnvironmentExtensionBeforeAnyOther() {
+        List<String> found = ServiceLoader.load(Extension.class).stream().map(provider -> provider.type().getName()).toList();
+        int environment = found.indexOf(AllureEnvironmentExtension.class.getName());
+
+        assertTrue(
+                environment >= 0
+                        && environment < found.indexOf(StandReadinessExtension.class.getName())
+                        && environment < found.indexOf(MigrationCheckExtension.class.getName()),
+                "The environment extension is not registered or comes after an extension that can fail"
         );
     }
 }

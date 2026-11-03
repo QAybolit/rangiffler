@@ -25,17 +25,18 @@ public final class SchemaMigrations {
     }
 
     /**
+     * Returns the version of the last migration applied to the schema, or {@code none} when no migration was applied; a schema that cannot be read fails with the exception of Flyway.
+     */
+    public String version() {
+        MigrationInfo current = flyway().info().current();
+        return current == null || current.getVersion() == null ? "none" : current.getVersion().toString();
+    }
+
+    /**
      * Returns one sentence per difference between the schema and the migration files, and an empty list when they match.
      */
     public List<String> problems() {
-        Flyway flyway = Flyway.configure()
-                .dataSource(dataSource)
-                .schemas(schema)
-                .locations("filesystem:" + location.toAbsolutePath().normalize())
-                .baselineOnMigrate(true)
-                .baselineVersion("0")
-                .ignoreMigrationPatterns("*:pending", "*:future", "*:missing", "*:ignored")
-                .load();
+        Flyway flyway = flyway();
         List<String> problems = new ArrayList<>();
         for (MigrationInfo info : flyway.info().all()) {
             switch (info.getState()) {
@@ -52,6 +53,17 @@ public final class SchemaMigrations {
             problems.add(invalid.errorDetails.errorMessage);
         }
         return problems;
+    }
+
+    private Flyway flyway() {
+        return Flyway.configure()
+                .dataSource(dataSource)
+                .schemas(schema)
+                .locations("filesystem:" + location.toAbsolutePath().normalize())
+                .baselineOnMigrate(true)
+                .baselineVersion("0")
+                .ignoreMigrationPatterns("*:pending", "*:future", "*:missing", "*:ignored")
+                .load();
     }
 
     private static String label(MigrationInfo info) {
