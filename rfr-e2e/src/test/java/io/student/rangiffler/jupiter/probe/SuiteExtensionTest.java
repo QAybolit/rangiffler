@@ -97,6 +97,28 @@ class SuiteExtensionTest {
     }
 
     @Test
+    @DisplayName("A class the extension does not apply to never starts it")
+    void shouldNotStartExtensionForInapplicableClass() {
+        assertEquals(
+                List.of("unmarked"),
+                eventsOf(Unmarked.class),
+                "The extension started or closed for a class it does not apply to"
+        );
+    }
+
+    @Test
+    @DisplayName("The extension starts once on the first class it applies to")
+    void shouldStartExtensionOnceOnApplicableClass() {
+        List<String> events = eventsOf(Unmarked.class, MarkedFirst.class, MarkedSecond.class);
+
+        assertEquals(
+                List.of(1, 1, "tagged.after"),
+                List.of(Collections.frequency(events, "tagged.before"), Collections.frequency(events, "tagged.after"), events.getLast()),
+                "The extension did not start and close once for the classes it applies to"
+        );
+    }
+
+    @Test
     @DisplayName("Each test run calls the hooks once on its own")
     void shouldStartEachRunFromScratch() {
         assertEquals(
@@ -314,6 +336,27 @@ class SuiteExtensionTest {
     }
 
     /**
+     * Suite extension that applies only to classes tagged marked.
+     */
+    static final class OnlyMarked implements SuiteExtension {
+
+        @Override
+        public boolean appliesTo(ExtensionContext context) {
+            return context.getTags().contains("marked");
+        }
+
+        @Override
+        public void beforeSuite(ExtensionContext context) {
+            EVENTS.add("tagged.before");
+        }
+
+        @Override
+        public void afterSuite(ExtensionContext context) {
+            EVENTS.add("tagged.after");
+        }
+    }
+
+    /**
      * Suite extension that records whether each hook received the root context.
      */
     static final class RootProbe implements SuiteExtension {
@@ -443,6 +486,44 @@ class SuiteExtensionTest {
             void body() {
                 EVENTS.add("nested");
             }
+        }
+    }
+
+    /**
+     * Sample class the tagged-only suite extension does not apply to.
+     */
+    @ExtendWith({UserExtensionTest.TestkitOnly.class, OnlyMarked.class})
+    static class Unmarked {
+
+        @Test
+        void body() {
+            EVENTS.add("unmarked");
+        }
+    }
+
+    /**
+     * First sample class the tagged-only suite extension applies to.
+     */
+    @Tag("marked")
+    @ExtendWith({UserExtensionTest.TestkitOnly.class, OnlyMarked.class})
+    static class MarkedFirst {
+
+        @Test
+        void body() {
+            EVENTS.add("marked.first");
+        }
+    }
+
+    /**
+     * Second sample class the tagged-only suite extension applies to.
+     */
+    @Tag("marked")
+    @ExtendWith({UserExtensionTest.TestkitOnly.class, OnlyMarked.class})
+    static class MarkedSecond {
+
+        @Test
+        void body() {
+            EVENTS.add("marked.second");
         }
     }
 

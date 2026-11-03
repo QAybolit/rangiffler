@@ -9,15 +9,25 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 public interface SuiteExtension extends BeforeAllCallback {
 
     /**
-     * Registers the run in the root store before beforeSuite is called, so the first class starts it, the others only repeat its failure, and the run closes in every case.
+     * Registers the run in the root store before beforeSuite is called, so the first applicable class starts it, the others only repeat its failure, and the run closes in every case.
      */
     @Override
     default void beforeAll(ExtensionContext context) {
+        if (!appliesTo(context)) {
+            return;
+        }
         ExtensionContext root = context.getRoot();
         SuiteRun run = root.getStore(ExtensionContext.Namespace.GLOBAL)
                 .computeIfAbsent(getClass(), key -> new SuiteRun(this, root), SuiteRun.class);
         run.start();
         run.check();
+    }
+
+    /**
+     * Tells whether the test class needs this extension; the run starts on the first class that does, and classes that do not never start it.
+     */
+    default boolean appliesTo(ExtensionContext context) {
+        return true;
     }
 
     default void beforeSuite(ExtensionContext context) {
