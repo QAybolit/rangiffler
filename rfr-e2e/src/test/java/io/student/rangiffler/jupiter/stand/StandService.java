@@ -1,4 +1,4 @@
-package io.student.rangiffler.stand;
+package io.student.rangiffler.jupiter.stand;
 
 import java.time.Duration;
 

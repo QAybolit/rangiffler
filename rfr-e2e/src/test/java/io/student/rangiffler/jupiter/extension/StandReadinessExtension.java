@@ -1,7 +1,7 @@
 package io.student.rangiffler.jupiter.extension;
 
 import io.student.rangiffler.config.TestConfig;
-import io.student.rangiffler.stand.StandReadiness;
+import io.student.rangiffler.jupiter.stand.StandReadiness;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.util.function.Function;

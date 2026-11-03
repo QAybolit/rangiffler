@@ -1,4 +1,4 @@
-package io.student.rangiffler.stand;
+package io.student.rangiffler.jupiter.stand;
 
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.DisplayName;
@@ -11,9 +11,12 @@ import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Checks with local servers that {@link HttpService} takes a status below 400 or, on request, any status for an answer, and that a silent server cannot hold it up.
@@ -67,6 +70,69 @@ class HttpServiceTest {
                 !answered && Duration.ofNanos(System.nanoTime() - started).compareTo(Duration.ofSeconds(5)) < 0,
                 "A silent server held the request past its timeout"
         );
+    }
+
+    @Test
+    @DisplayName("Answers when the server listens only on the IPv6 address of the host name")
+    void shouldAnswerWhenServerListensOnlyOnIpv6() throws IOException {
+        InetAddress ipv6 = InetAddress.getByName("::1");
+        assumeTrue(Arrays.asList(InetAddress.getAllByName("localhost")).contains(ipv6), "localhost does not resolve to ::1");
+        HttpServer server = HttpServer.create(new InetSocketAddress(ipv6, 0), 0);
+        server.createContext("/", exchange -> {
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+        });
+        server.start();
+        try {
+            assertEquals(
+                    true,
+                    new HttpService(
+                            "front",
+                            "start front",
+                            HttpRequest.newBuilder(URI.create("http://localhost:" + server.getAddress().getPort() + "/")).GET().build(),
+                            false
+                    ).answers(Duration.ofSeconds(2)),
+                    "A server on the IPv6 address was not found through the host name"
+            );
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    @DisplayName("Sends the host name as it is when the host is not localhost")
+    void shouldKeepHostHeaderForOtherNames() throws IOException {
+        assumeTrue(resolves("localhost."), "localhost. does not resolve");
+        AtomicReference<String> seen = new AtomicReference<>("");
+        HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+        server.createContext("/", exchange -> {
+            seen.set(exchange.getRequestHeaders().getFirst("Host"));
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+        });
+        server.start();
+        try {
+            int port = server.getAddress().getPort();
+            new HttpService(
+                    "auth",
+                    "start auth",
+                    HttpRequest.newBuilder(URI.create("http://localhost.:" + port + "/")).GET().build(),
+                    false
+            ).answers(Duration.ofSeconds(2));
+
+            assertEquals("localhost.:" + port, seen.get(), "The host name was replaced by an address for a name other than localhost");
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    private static boolean resolves(String host) {
+        try {
+            InetAddress.getByName(host);
+            return true;
+        } catch (IOException unknown) {
+            return false;
+        }
     }
 
     private static boolean answers(int status, boolean anyResponse) throws IOException {

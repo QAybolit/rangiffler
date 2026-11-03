@@ -2,8 +2,8 @@ package io.student.rangiffler.jupiter.probe;
 
 import com.sun.net.httpserver.HttpServer;
 import io.student.rangiffler.jupiter.extension.StandReadinessExtension;
-import io.student.rangiffler.stand.HttpService;
-import io.student.rangiffler.stand.StandReadiness;
+import io.student.rangiffler.jupiter.stand.HttpService;
+import io.student.rangiffler.jupiter.stand.StandReadiness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
