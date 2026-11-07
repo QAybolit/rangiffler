@@ -9,11 +9,11 @@ One `src/test` source set, package `io.student.rangiffler`:
 | Package | Contents |
 |---|---|
 | `config` | `TestConfig`, the only place that reads settings |
-| `jupiter` | JUnit infrastructure: `annotation` (`@User`, `@BrowserLocale`), `extension` (`UserExtension`) |
-| `data` | Test data and its owners: `TestUser`, `UserFixture`, the repositories; `data/db` has `Databases` and `Jdbc` |
+| `jupiter` | JUnit infrastructure: `annotation` (`@User` with `friends`, `incomeInvitations`, `outcomeInvitations`; `@StaticUser`), `extension` (`UserExtension` creates a `@User` user; `UsersQueueExtension` lends a `@StaticUser` user from the pool; `UserExtensionTest` and `UsersQueueExtensionTest` run nested sample classes through EngineTestKit) |
+| `data` | Test data and its owners: `TestUser`, `UserFixture` with `BaseUserFixture`, the decorator `UserWithRelationsFixture` with the `Relation` enum (shared partner logic in `Partners`) and `StaticUserFixture` (the pool of static users), `UserRequest`; `data/db` has `Databases`, `Jdbc` and the repositories (`ApiUserRepository`, `AuthUserRepository`), `Friendship` and `FriendshipStatus`; SQL files are in `src/test/resources/sql/{api,auth}` |
 | `utils` | Stateless static helpers, e.g. `RandomDataUtils` |
 | `ui` | `page` (Page Objects) and `component` (shared page parts) |
-| `test` | `BaseWebTest` and the tests, grouped by feature (`auth`, `profile`, ...) |
+| `test` | `BaseWebTest` and the tests, grouped by feature (`auth`, `profile`, `people`, ...) |
 
 Layering: `jupiter` has no SQL and no locators; `data` has no JUnit; tests have no locators and no SQL; no `ThreadLocal` for test state, it lives in the extension's `Store`.
 
@@ -28,6 +28,20 @@ Every UI test class carries its own `@Tag("ui")` (it is not inherited from `Base
 ```
 `e2e` runs `waitForStand` first (`scripts/wait-for-stand.sh`), which waits for MySQL, `rfr-auth`, `rfr-api` and the frontend for up to `WAIT_TIMEOUT` seconds (default 180).
 
+`UserExtensionTest` (tag `extension`) needs MySQL but no browser. Its nested sample classes are enabled only when the configuration parameter `rfr.testkit` is `true`, which the test sets itself, so they never run on their own.
+
+## Static users
+
+A test that cannot create its user on the fly takes a `@StaticUser TestUser` parameter, and `UsersQueueExtension` lends it one of the pooled users `static-user-1`, `static-user-2` and `static-user-3` (password `static-secret`) from a JVM-wide queue and gives it back after the test. A test waits for a free user for `rfr.staticUserTimeout` seconds. No code creates these users, and static tests must only read their data, because the users are shared by every test and every run.
+
+Create the pooled users once in a fresh database, in both schemas (`rangiffler-auth` and `rangiffler-api`); the script can be run again without harm:
+```bash
+docker exec -i rfr-mysql mysql -uroot -psecret < scripts/static-users.sql
+```
+If the users are missing, tests with `@StaticUser` fail at login with "Bad credentials"; `wait-for-stand.sh` does not check for them. The names and the password are also literals in `StaticUserFixture`, so change them in both places together.
+
+Use `@StaticUser` on a parameter of the test method only, once per test, and add `@ExtendWith(UsersQueueExtension.class)` to every test class that uses it.
+
 ## Test settings
 
 `io.student.rangiffler.config.TestConfig` is the only place that reads settings. A setting is taken from the system property `-Drfr.<key>`, then from the environment variable `RFR_<KEY>` (camelCase becomes upper snake case, so `frontUrl` is `RFR_FRONT_URL`), then from a local default, so tests run against a local environment with no extra arguments. Prerequisites: MySQL, `rfr-auth`, `rfr-api` and the frontend are running, and Chromium is installed for Playwright (the build disables Playwright's browser auto-download).
@@ -41,7 +55,8 @@ Every UI test class carries its own `@Tag("ui")` (it is not inherited from `Base
 | `rfr.dbUser` / `rfr.dbPassword` | `root` / `secret` | Database credentials |
 | `rfr.browser` | `chromium` | `chromium`, `firefox` or `webkit` |
 | `rfr.headless` | `true` | `false` shows the browser window |
-| `rfr.browserLocale` | `en-US` | Default browser locale; `@BrowserLocale` on a test overrides it |
+| `rfr.browserLocale` | `en-US` | Browser locale for all UI tests (set in `PlaywrightOptions`) |
+| `rfr.staticUserTimeout` | `30` | Seconds `StaticUserFixture` waits for a free pooled user before failing |
 
 `rfr-e2e/build.gradle` forwards every `-Drfr.*` argument to the test JVM, and environment variables reach it by default, so pass a setting either way:
 ```bash
