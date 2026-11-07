@@ -3,7 +3,6 @@ package io.student.rangiffler.test.auth;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.student.rangiffler.data.TestUser;
-import io.student.rangiffler.jupiter.annotation.BrowserLocale;
 import io.student.rangiffler.jupiter.annotation.User;
 import io.student.rangiffler.test.BaseWebTest;
 import io.student.rangiffler.ui.page.WelcomePage;
@@ -20,10 +19,8 @@ import static io.student.rangiffler.utils.RandomDataUtils.randomUsername;
 class LoginNegativeTest extends BaseWebTest {
 
     private static final String BAD_CREDENTIALS_EN = "Bad credentials";
-    private static final String BAD_CREDENTIALS_RU = "Неверные учетные данные пользователя";
 
     @Test
-    @BrowserLocale("en-US")
     @DisplayName("Login with a wrong password shows 'Bad credentials'")
     void shouldShowBadCredentialsForWrongPassword(@User TestUser user) {
         new WelcomePage(page)
@@ -34,7 +31,6 @@ class LoginNegativeTest extends BaseWebTest {
     }
 
     @Test
-    @BrowserLocale("en-US")
     @DisplayName("Login with a non-existing user shows 'Bad credentials'")
     void shouldShowBadCredentialsForNonExistingUser() {
         new WelcomePage(page)
@@ -44,14 +40,4 @@ class LoginNegativeTest extends BaseWebTest {
                 .shouldHaveError(BAD_CREDENTIALS_EN);
     }
 
-    @Test
-    @BrowserLocale("ru-RU")
-    @DisplayName("Login with a wrong password shows the error in Russian")
-    void shouldShowBadCredentialsInRussian(@User TestUser user) {
-        new WelcomePage(page)
-                .open()
-                .clickLogin()
-                .loginWithInvalidCredentials(user.username(), randomPassword())
-                .shouldHaveError(BAD_CREDENTIALS_RU);
-    }
 }

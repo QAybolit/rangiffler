@@ -43,6 +43,15 @@ public final class Jdbc {
     }
 
     /**
+     * Fails fast unless the statement changed exactly one row, so a silent no-op insert cannot hide a missing parent row.
+     */
+    public static void requireOneRow(int rows, String action) {
+        if (rows != 1) {
+            throw new IllegalStateException("Expected one row but " + action + " changed " + rows);
+        }
+    }
+
+    /**
      * Loads SQL text from a classpath resource such as {@code sql/auth/insert_user.sql}.
      */
     public static String sql(String resourcePath) {
