@@ -96,12 +96,12 @@ class AllureEnvironmentExtensionTest {
     @Test
     @DisplayName("The file is not written when no test class of the run is tagged ui")
     void shouldNotWriteFileWithoutUiClass(@TempDir Path results) {
-        run(results, NotUi.class);
+        EngineExecutionResults outcome = run(results, NotUi.class);
 
         assertEquals(
-                false,
-                Files.exists(results.resolve("environment.properties")),
-                "The file was written although no test class was tagged ui"
+                List.of(1L, List.of(), false),
+                List.of(outcome.testEvents().succeeded().count(), failures(outcome), Files.exists(results.resolve("environment.properties"))),
+                "The sample did not run cleanly or the file was written although no test class was tagged ui"
         );
     }
 

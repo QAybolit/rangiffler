@@ -14,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 @Epic("Profile")
 @Feature("Profile view")
-@Tag("ui")
 @ExtendWith(UsersQueueExtension.class)
 class ProfileStaticUserTest extends BaseWebTest {
 
