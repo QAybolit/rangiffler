@@ -1,9 +1,6 @@
-package io.student.rangiffler.fixture;
+package io.student.rangiffler.data;
 
 import io.qameta.allure.Allure;
-import io.student.rangiffler.data.ApiUserRepository;
-import io.student.rangiffler.data.AuthUserRepository;
-import io.student.rangiffler.model.TestUser;
 
 import static io.student.rangiffler.utils.RandomDataUtils.randomPassword;
 import static io.student.rangiffler.utils.RandomDataUtils.randomUsername;

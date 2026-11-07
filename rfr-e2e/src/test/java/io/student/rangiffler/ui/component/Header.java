@@ -1,10 +1,10 @@
-package io.student.rangiffler.page.component;
+package io.student.rangiffler.ui.component;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
-import io.student.rangiffler.page.ProfilePage;
+import io.student.rangiffler.ui.page.ProfilePage;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 

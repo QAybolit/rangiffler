@@ -13,8 +13,8 @@ import javax.sql.DataSource;
  */
 public enum Databases {
 
-    AUTH(TestConfig.authDbUrl()),
-    API(TestConfig.apiDbUrl());
+    AUTH(TestConfig.dbUrl() + "/rangiffler-auth"),
+    API(TestConfig.dbUrl() + "/rangiffler-api");
 
     private final DataSource dataSource;
     private final PlatformTransactionManager transactionManager;

@@ -1,8 +1,8 @@
-package io.student.rangiffler.page;
+package io.student.rangiffler.ui.page;
 
 import com.microsoft.playwright.Page;
 import io.student.rangiffler.config.TestConfig;
-import io.student.rangiffler.page.component.Header;
+import io.student.rangiffler.ui.component.Header;
 
 public final class MyTravelsPage {
 

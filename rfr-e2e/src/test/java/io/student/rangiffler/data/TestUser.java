@@ -1,4 +1,4 @@
-package io.student.rangiffler.model;
+package io.student.rangiffler.data;
 
 /**
  * A test user's credentials.

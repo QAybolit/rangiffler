@@ -1,8 +1,14 @@
 #!/bin/bash
 
-echo '### Stop and remove containers ###'
-docker stop $(docker ps -a -q)
-docker rm $(docker ps -a -q)
+cd "$(dirname "$0")" || exit 1
+
+existing=$(docker ps -aq --filter 'name=^/rfr-mysql$')
+managed=$(docker ps -aq --filter 'name=^/rfr-mysql$' --filter 'label=com.docker.compose.project')
+
+if [ -n "$existing" ] && [ -z "$managed" ]; then
+  echo '### Remove rfr-mysql created without docker compose (data stays in mysql-volume) ###'
+  docker rm -f rfr-mysql
+fi
 
 echo '### Run mysql db ###'
-docker run --name rfr-mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=secret -v mysql-volume:/var/lib/mysql -d mysql:8.4.7
+docker compose up -d --wait

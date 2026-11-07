@@ -6,7 +6,7 @@ description: Create or update a Playwright Java Page Object (and reusable compon
 # Create Page Object
 
 Generate Page Objects for `rfr-e2e` (Playwright Java + Allure + JUnit 6). Place them under
-`rfr-e2e/src/test/java/io/student/rangiffler/page/` (reusable parts under `page/component/`).
+`rfr-e2e/src/test/java/io/student/rangiffler/ui/page/` (reusable parts under `ui/component/`).
 Before writing, inspect the page in the running app (Playwright MCP snapshot, if available) to pick real locators.
 
 ## Rules
@@ -72,13 +72,13 @@ Before writing, inspect the page in the running app (Playwright MCP snapshot, if
 ## Example
 
 ```java
-package io.student.rangiffler.page;
+package io.student.rangiffler.ui.page;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
-import io.student.rangiffler.page.component.Header;
+import io.student.rangiffler.ui.component.Header;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
