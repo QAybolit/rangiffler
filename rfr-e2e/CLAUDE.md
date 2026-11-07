@@ -30,7 +30,7 @@ Every UI test class carries its own `@Tag("ui")` (it is not inherited from `Base
 ```
 The stand is awaited by `StandReadinessExtension` before the first class tagged `ui`, so both `e2e` and a UI test started from the IDE wait for it; there is no separate wait task.
 
-`UserExtensionTest` (tag `extension`) needs MySQL but no browser. Its nested sample classes are enabled only when the configuration parameter `rfr.testkit` is `true`, which the test sets itself, so they never run on their own. `@ProbeTarget` also carries the tag `probe`, and `e2e` excludes it: sample classes need the tag `ui` for `StandReadinessExtension`, and without this exclusion they would show up as skipped tests in every `e2e` run.
+`UserExtensionTest` (tag `extension`) needs MySQL but no browser. Its nested sample classes are enabled only when the configuration parameter `rfr.testkit` is `true`, which the test sets itself, so they never run on their own. `@ProbeTarget` also carries the tag `probe`, and both `test` and `e2e` exclude it, with or without `--tests`: sample classes need the tag `ui` for `StandReadinessExtension`, and without this exclusion they would show up as skipped tests in every run. The exclusion does not touch EngineTestKit, which runs the samples itself.
 
 ## Static users
 

@@ -79,7 +79,9 @@ tasks.withType(Test).configureEach {
 
 test {
     failOnNoDiscoveredTests = false
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags 'probe'
+    }
     doFirst {
         if (filter.commandLineIncludePatterns.empty) {
             options { excludeTags 'ui' }
