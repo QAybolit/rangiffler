@@ -75,6 +75,13 @@ tasks.withType(Test).configureEach {
     environment 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', '1'
     jvmArgumentProviders.add({ ["-javaagent:${configurations.agent.singleFile}"] } as CommandLineArgumentProvider)
     outputs.upToDateWhen { false }
+    // a class-level failure such as the stand wait is only a bare FAILED line without this
+    testLogging {
+        events 'failed'
+        exceptionFormat 'full'
+        showStackTraces = false
+        showCauses = true
+    }
 }
 
 test {
