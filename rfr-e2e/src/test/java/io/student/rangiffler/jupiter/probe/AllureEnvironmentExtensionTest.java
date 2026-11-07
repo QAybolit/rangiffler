@@ -93,6 +93,18 @@ class AllureEnvironmentExtensionTest {
         );
     }
 
+    @Test
+    @DisplayName("The file is not written when no test class of the run is tagged ui")
+    void shouldNotWriteFileWithoutUiClass(@TempDir Path results) {
+        run(results, NotUi.class);
+
+        assertEquals(
+                false,
+                Files.exists(results.resolve("environment.properties")),
+                "The file was written although no test class was tagged ui"
+        );
+    }
+
     private static EngineExecutionResults run(Path results, Class<?> sample) {
         return EngineTestKit.engine("junit-jupiter")
                 .selectors(selectClass(sample))
@@ -141,9 +153,24 @@ class AllureEnvironmentExtensionTest {
     }
 
     /**
+     * Sample class without the tag {@code ui}.
+     */
+    @ProbeTarget
+    static class NotUi {
+
+        @RegisterExtension
+        static final AllureEnvironmentExtension ALLURE = writing("1", "2");
+
+        @Test
+        void body() {
+        }
+    }
+
+    /**
      * Sample class whose schema versions are known.
      */
     @ProbeTarget
+    @Tag("ui")
     static class Plain {
 
         @RegisterExtension
@@ -158,6 +185,7 @@ class AllureEnvironmentExtensionTest {
      * Sample class whose schema versions cannot be read.
      */
     @ProbeTarget
+    @Tag("ui")
     static class Unreachable {
 
         @RegisterExtension
@@ -180,6 +208,7 @@ class AllureEnvironmentExtensionTest {
      * Sample class where the environment extension comes first and another extension fails.
      */
     @ProbeTarget
+    @Tag("ui")
     static class FirstThenFailing {
 
         @Order(1)
@@ -199,6 +228,7 @@ class AllureEnvironmentExtensionTest {
      * Sample class where another extension fails before the environment extension.
      */
     @ProbeTarget
+    @Tag("ui")
     static class FailingThenLast {
 
         @Order(1)

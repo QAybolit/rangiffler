@@ -42,6 +42,14 @@ public final class AllureEnvironmentExtension implements SuiteExtension {
     }
 
     /**
+     * Applies to test classes tagged {@code ui}, so a run without them neither writes the file nor opens a connection to MySQL.
+     */
+    @Override
+    public boolean appliesTo(ExtensionContext context) {
+        return context.getTags().contains("ui");
+    }
+
+    /**
      * Writes the file; a failure to write it is reported on the error stream and does not fail the run, because the file is only a report.
      */
     @Override
