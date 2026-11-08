@@ -9,7 +9,7 @@ One `src/test` source set, package `io.student.rangiffler`:
 | Package | Contents |
 |---|---|
 | `config` | `TestConfig`, the only place that reads settings |
-| `jupiter` | JUnit infrastructure: `annotation` (`@User` with `friends`, `incomeInvitations`, `outcomeInvitations`; `@StaticUser`), `extension` (`UserExtension` creates a `@User` user; `UsersQueueExtension` lends a `@StaticUser` user from the pool; `SuiteExtension` with `SuiteRun` is the base of extensions of the whole run and `MigrationCheckExtension` is one of them; `DemoExtension`, `DemoValue` and `@Demo` serve the demo tests), `probe` (`UserExtensionTest`, `UsersQueueExtensionTest` and `SuiteExtensionTest` run nested sample classes through EngineTestKit) |
+| `jupiter` | JUnit infrastructure: `annotation` (`@User` with `friends`, `incomeInvitations`, `outcomeInvitations`; `@StaticUser`), `extension` (`UserExtension` creates a `@User` user; `UsersQueueExtension` lends a `@StaticUser` user from the pool; `PlaywrightOptions` gives `@UsePlaywright` the browser, locale, window size and the test id attribute `data-test-id`; `SuiteExtension` with `SuiteRun` is the base of extensions of the whole run and `MigrationCheckExtension` is one of them; `DemoExtension`, `DemoValue` and `@Demo` serve the demo tests), `probe` (`UserExtensionTest`, `UsersQueueExtensionTest` and `SuiteExtensionTest` run nested sample classes through EngineTestKit) |
 | `data` | Test data and its owners: `TestUser`, `UserFixture` with `BaseUserFixture`, the decorator `UserWithRelationsFixture` with the `Relation` enum (shared partner logic in `Partners`) and `StaticUserFixture` (the pool of static users), `UserRequest`; `data/db` has `Databases`, `Jdbc`, `SchemaMigrations` and the repositories (`ApiUserRepository`, `AuthUserRepository`), `Friendship` and `FriendshipStatus`; SQL files are in `src/test/resources/sql/{api,auth}` |
 | `jupiter/allure` | `EnvironmentFile`, the `environment.properties` of an Allure results directory |
 | `jupiter/stand` | Waiting for the stand without JUnit: `StandService` with `TcpService` and `HttpService`, `StandReadiness`; `StandReadinessTest`, `TcpServiceTest` and `HttpServiceTest` check them on fake services |
@@ -84,6 +84,7 @@ It is listed above `MigrationCheckExtension` in `META-INF/services`, and the ord
 | `rfr.browser` | `chromium` | `chromium`, `firefox` or `webkit` |
 | `rfr.headless` | `true` | `false` shows the browser window |
 | `rfr.browserLocale` | `en-US` | Browser locale for all UI tests (set in `PlaywrightOptions`) |
+| `rfr.viewportWidth` / `rfr.viewportHeight` | `1920` / `1080` | Browser window size in pixels for all UI tests (set in `PlaywrightOptions`), each side on its own; a value that is not a whole number from 1 to 99999 fails the tests that open a browser |
 | `rfr.staticUserTimeout` | `30` | Seconds `StaticUserFixture` waits for a free pooled user before failing |
 | `rfr.standTimeout` | `180` | Seconds `StandReadinessExtension` waits for MySQL, `rfr-auth`, `rfr-api` and the frontend; every request has its own 5 s timeout |
 | `rfr.standCheck` | `true` | `false` turns the wait for the stand off completely |
