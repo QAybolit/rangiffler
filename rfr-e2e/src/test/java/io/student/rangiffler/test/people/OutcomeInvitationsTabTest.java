@@ -5,14 +5,14 @@ import io.qameta.allure.Feature;
 import io.student.rangiffler.data.BaseUserFixture;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.UserFixture;
+import io.student.rangiffler.jupiter.annotation.UiTest;
 import io.student.rangiffler.jupiter.annotation.User;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Epic("People")
 @Feature("Outcome invitations tab")
-@Tag("ui")
+@UiTest
 class OutcomeInvitationsTabTest extends BasePeopleTest {
 
     @Test

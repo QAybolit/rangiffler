@@ -3,11 +3,11 @@ package io.student.rangiffler.test.auth;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.student.rangiffler.data.TestUser;
+import io.student.rangiffler.jupiter.annotation.UiTest;
 import io.student.rangiffler.jupiter.annotation.User;
 import io.student.rangiffler.test.BaseWebTest;
 import io.student.rangiffler.ui.page.WelcomePage;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static io.student.rangiffler.utils.RandomDataUtils.randomPassword;
@@ -15,7 +15,7 @@ import static io.student.rangiffler.utils.RandomDataUtils.randomUsername;
 
 @Epic("Auth")
 @Feature("Login")
-@Tag("ui")
+@UiTest
 class LoginNegativeTest extends BaseWebTest {
 
     private static final String BAD_CREDENTIALS_EN = "Bad credentials";
