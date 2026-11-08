@@ -50,9 +50,24 @@ allure {
     adapter {
         autoconfigure.set(false)
     }
+    report {
+        configFile = file('allurerc.mjs')
+    }
 }
 
+def commit = {
+    try {
+        providers.exec {
+            commandLine 'git', 'rev-parse', '--short', 'HEAD'
+            ignoreExitValue = true
+        }.standardOutput.asText.get().trim() ?: 'unknown'
+    } catch (Exception ignored) {
+        'unknown'
+    }
+}()
+
 tasks.withType(Test).configureEach {
+    systemProperty 'rfr.commit', commit
     systemProperty 'rfr.authMigrations', rootProject.file('rfr-auth/src/main/resources/db/migration/rangiffler-auth').absolutePath
     systemProperty 'rfr.apiMigrations', rootProject.file('rfr-api/src/main/resources/db/migration/rangiffler-api').absolutePath
     systemProperties System.getProperties().findAll { key, value -> key.toString().startsWith('rfr.') }
@@ -60,23 +75,25 @@ tasks.withType(Test).configureEach {
     environment 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', '1'
     jvmArgumentProviders.add({ ["-javaagent:${configurations.agent.singleFile}"] } as CommandLineArgumentProvider)
     outputs.upToDateWhen { false }
+    // a class-level failure such as the stand wait is only a bare FAILED line without this
+    testLogging {
+        events 'failed'
+        exceptionFormat 'full'
+        showStackTraces = false
+        showCauses = true
+    }
 }
 
 test {
     failOnNoDiscoveredTests = false
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags 'probe'
+    }
     doFirst {
         if (filter.commandLineIncludePatterns.empty) {
             options { excludeTags 'ui' }
         }
     }
-}
-
-def waitForStand = tasks.register('waitForStand', Exec) {
-    group = 'verification'
-    description = 'Waits until MySQL, rfr-auth, rfr-api and the front respond'
-    workingDir = rootProject.projectDir
-    commandLine 'scripts/wait-for-stand.sh'
 }
 
 tasks.register('e2e', Test) {
@@ -87,8 +104,8 @@ tasks.register('e2e', Test) {
     systemProperty 'rfr.migrationCheck', 'true'
     useJUnitPlatform {
         includeTags 'ui'
+        excludeTags 'probe'
     }
-    dependsOn waitForStand
 }
 
 tasks.register('installPlaywright', JavaExec) {

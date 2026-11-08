@@ -139,9 +139,23 @@ jobs:
         run: |
           npm ci
           nohup npm run dev > ../front.log 2>&1 &
+      - name: Create the static users once the backends have migrated the schemas
+        env:
+          MYSQL_PWD: secret
+        run: |
+          deadline=$(( $(date +%s) + 240 ))
+          until [ -n "$(mysql -h 127.0.0.1 -uroot -N -e 'select count(*) from `rangiffler-auth`.`authority`' 2>/dev/null)" ] \
+            && [ -n "$(mysql -h 127.0.0.1 -uroot -N -e 'select id from `rangiffler-api`.`country` where code = "ru"' 2>/dev/null)" ]; do
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "The schemas were not migrated in 240 s" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+          mysql -h 127.0.0.1 -uroot < scripts/static-users.sql
       - name: Wait for the stand and run UI tests
         env:
-          WAIT_TIMEOUT: 240
+          RFR_STAND_TIMEOUT: 240
         run: ./gradlew :rfr-e2e:e2e
       - name: Upload Allure results
         if: always()
