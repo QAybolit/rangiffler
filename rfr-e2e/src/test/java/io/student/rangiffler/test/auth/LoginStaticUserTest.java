@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 @Epic("Auth")
 @Feature("Login")
+@Tag("ui")
 @ExtendWith(UsersQueueExtension.class)
 class LoginStaticUserTest extends BaseWebTest {
 
