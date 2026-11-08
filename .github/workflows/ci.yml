@@ -139,9 +139,15 @@ jobs:
         run: |
           npm ci
           nohup npm run dev > ../front.log 2>&1 &
-      - name: Wait for the stand and run UI tests
+      - name: Wait for the stand
         env:
           WAIT_TIMEOUT: 240
+        run: bash scripts/wait-for-stand.sh
+      - name: Create the static users
+        env:
+          MYSQL_PWD: secret
+        run: mysql -h 127.0.0.1 -uroot < scripts/static-users.sql
+      - name: Run UI tests
         run: ./gradlew :rfr-e2e:e2e
       - name: Upload Allure results
         if: always()
