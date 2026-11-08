@@ -40,7 +40,7 @@ Create the pooled users once in a fresh database, in both schemas (`rangiffler-a
 ```bash
 docker exec -i rfr-mysql mysql -uroot -psecret < scripts/static-users.sql
 ```
-If the users are missing, tests with `@StaticUser` fail at login with "Bad credentials"; the stand wait does not check for them. The names and the password are also literals in `StaticUserFixture`, so change them in both places together.
+The pull request workflow creates them with the same script once the backends have migrated both schemas, so a local run is the only one that needs the command above. If the users are missing, tests with `@StaticUser` fail at login with "Bad credentials"; the stand wait does not check for them. The names and the password are also literals in `StaticUserFixture`, so change them in both places together.
 
 Use `@StaticUser` on a parameter of the test method only, once per test, and add `@ExtendWith(UsersQueueExtension.class)` to every test class that uses it.
 
