@@ -78,7 +78,7 @@ tasks.withType(Test).configureEach {
     // a class-level failure such as the stand wait is only a bare FAILED line without this
     testLogging {
         events 'failed'
-        exceptionFormat 'full'
+        exceptionFormat = 'full'
         showStackTraces = false
         showCauses = true
     }
