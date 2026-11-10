@@ -26,6 +26,8 @@ public final class TestConfig {
     private static final Locale BROWSER_LOCALE = Locale.forLanguageTag(value("browserLocale", "en-US"));
     private static final String VIEWPORT_WIDTH = value("viewportWidth", "1920");
     private static final String VIEWPORT_HEIGHT = value("viewportHeight", "1080");
+    private static final String ACTION_TIMEOUT = value("actionTimeout", "5000");
+    private static final String NAVIGATION_TIMEOUT = value("navigationTimeout", "30000");
 
     private TestConfig() {
     }
@@ -104,6 +106,26 @@ public final class TestConfig {
             throw new IllegalArgumentException("Invalid rfr.viewportHeight \"" + VIEWPORT_HEIGHT + "\", expected a whole number of pixels from 1 to 99999");
         }
         return Integer.parseInt(VIEWPORT_HEIGHT);
+    }
+
+    /**
+     * Returns how long a Playwright action waits in milliseconds from {@code rfr.actionTimeout}; parsed on demand so a bad value breaks only the tests that open a browser.
+     */
+    public static double actionTimeout() {
+        if (!ACTION_TIMEOUT.matches("[1-9][0-9]{0,5}")) {
+            throw new IllegalArgumentException("Invalid rfr.actionTimeout \"" + ACTION_TIMEOUT + "\", expected a whole number of milliseconds from 1 to 999999");
+        }
+        return Double.parseDouble(ACTION_TIMEOUT);
+    }
+
+    /**
+     * Returns how long a Playwright navigation waits in milliseconds from {@code rfr.navigationTimeout}; parsed on demand so a bad value breaks only the tests that open a browser.
+     */
+    public static double navigationTimeout() {
+        if (!NAVIGATION_TIMEOUT.matches("[1-9][0-9]{0,5}")) {
+            throw new IllegalArgumentException("Invalid rfr.navigationTimeout \"" + NAVIGATION_TIMEOUT + "\", expected a whole number of milliseconds from 1 to 999999");
+        }
+        return Double.parseDouble(NAVIGATION_TIMEOUT);
     }
 
     /**

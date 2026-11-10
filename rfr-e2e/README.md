@@ -30,6 +30,8 @@ TestConfig читает -Drfr.<ключ> → RFR_<КЛЮЧ> → значение
 | rfr.browser / rfr.headless | chromium / true |
 | rfr.browserLocale | en-US |
 | rfr.viewportWidth / rfr.viewportHeight | 1920 / 1080 (размер окна браузера в пикселях, каждая сторона задаётся отдельно) |
+| rfr.actionTimeout | 5000 (миллисекунд ожидания действий Playwright) |
+| rfr.navigationTimeout | 30000 (миллисекунд ожидания навигации Playwright) |
 | rfr.staticUserTimeout | 30 (секунд ожидания свободного пользователя из пула) |
 | rfr.standTimeout | 180 (секунд ожидания стенда; каждый запрос ограничен 5 секундами) |
 | rfr.standCheck | true (false выключает ожидание стенда совсем) |
