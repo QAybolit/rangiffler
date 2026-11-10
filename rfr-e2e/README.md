@@ -32,6 +32,7 @@ TestConfig читает -Drfr.<ключ> → RFR_<КЛЮЧ> → значение
 | rfr.viewportWidth / rfr.viewportHeight | 1920 / 1080 (размер окна браузера в пикселях, каждая сторона задаётся отдельно) |
 | rfr.actionTimeout | 5000 (миллисекунд ожидания действий Playwright) |
 | rfr.navigationTimeout | 30000 (миллисекунд ожидания навигации Playwright) |
+| rfr.trace | off (трассировка Playwright: off, on или retain-on-failure; trace.zip кладётся в rfr-e2e/test-results/<тест>/ и открывается в Trace Viewer: npx playwright show-trace <файл>) |
 | rfr.staticUserTimeout | 30 (секунд ожидания свободного пользователя из пула) |
 | rfr.standTimeout | 180 (секунд ожидания стенда; каждый запрос ограничен 5 секундами) |
 | rfr.standCheck | true (false выключает ожидание стенда совсем) |

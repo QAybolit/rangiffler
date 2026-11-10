@@ -87,6 +87,7 @@ It is listed above `MigrationCheckExtension` in `META-INF/services`, and the ord
 | `rfr.viewportWidth` / `rfr.viewportHeight` | `1920` / `1080` | Browser window size in pixels for all UI tests (set in `PlaywrightOptions`), each side on its own; a value that is not a whole number from 1 to 99999 fails the tests that open a browser |
 | `rfr.actionTimeout` | `5000` | Milliseconds a Playwright action or wait lasts in all UI tests (set in `BaseWebTest`); a value that is not a whole number from 1 to 999999 fails the tests that open a browser |
 | `rfr.navigationTimeout` | `30000` | Milliseconds a Playwright navigation lasts in all UI tests, with the same limits as `rfr.actionTimeout` |
+| `rfr.trace` | `off` | Playwright trace of every UI test: `off`, `on` or `retain-on-failure` (set in `PlaywrightOptions`); the file `trace.zip` goes to `rfr-e2e/test-results/<test>/` and opens with the Trace Viewer (`npx playwright show-trace <file>`) |
 | `rfr.staticUserTimeout` | `30` | Seconds `StaticUserFixture` waits for a free pooled user before failing |
 | `rfr.standTimeout` | `180` | Seconds `StandReadinessExtension` waits for MySQL, `rfr-auth`, `rfr-api` and the frontend; every request has its own 5 s timeout |
 | `rfr.standCheck` | `true` | `false` turns the wait for the stand off completely |
