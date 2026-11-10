@@ -5,8 +5,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
-
-import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+import io.student.rangiffler.ui.component.PeopleTable;
 
 public final class PeoplePage {
 
@@ -18,8 +17,7 @@ public final class PeoplePage {
     private final Locator incomeInvitationsTab;
     private final Locator outcomeInvitationsTab;
     private final Locator searchInput;
-    private final Locator rows;
-    private final Locator emptyState;
+    private final PeopleTable table;
 
     public PeoplePage(Page page) {
         this.page = page;
@@ -28,8 +26,7 @@ public final class PeoplePage {
         this.incomeInvitationsTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Income invitations"));
         this.outcomeInvitationsTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Outcome invitations"));
         this.searchInput = page.getByPlaceholder("Search people");
-        this.rows = page.locator("tbody tr");
-        this.emptyState = page.getByText("There are no users yet");
+        this.table = new PeopleTable(page);
     }
 
     @Step("Open 'Friends' tab")
@@ -65,46 +62,37 @@ public final class PeoplePage {
 
     @Step("Click 'Add' for '{username}' and wait for FriendshipAction mutation")
     public PeoplePage clickAdd(String username) {
-        Locator addButton = row(username).getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Add"));
-        waitForOperation("FriendshipAction", addButton::click);
+        table.row(username).clickAdd();
         return this;
     }
 
     @Step("Check that the table lists exactly the users {usernames}")
     public PeoplePage shouldHaveUsers(String... usernames) {
-        assertThat(rows).hasCount(usernames.length);
-        for (String username : usernames) {
-            assertThat(row(username)).hasCount(1);
-        }
+        table.shouldHaveUsers(usernames);
         return this;
     }
 
     @Step("Check that the table does not list the users {usernames}")
     public PeoplePage shouldNotHaveUsers(String... usernames) {
-        for (String username : usernames) {
-            assertThat(row(username)).hasCount(0);
-        }
+        table.shouldNotHaveUsers(usernames);
         return this;
     }
 
     @Step("Check that '{username}' has the buttons {buttons}")
     public PeoplePage shouldHaveButtons(String username, String... buttons) {
-        for (String button : buttons) {
-            assertThat(row(username).getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(button).setExact(true))).isVisible();
-        }
+        table.row(username).shouldHaveButtons(buttons);
         return this;
     }
 
     @Step("Check that the invitation for '{username}' is waiting")
     public PeoplePage shouldHaveInvitationSent(String username) {
-        assertThat(row(username).getByText("Waiting...")).isVisible();
+        table.row(username).shouldHaveInvitationSent();
         return this;
     }
 
     @Step("Check that the table is empty")
     public PeoplePage shouldBeEmpty() {
-        assertThat(emptyState).isVisible();
-        assertThat(rows).hasCount(0);
+        table.shouldBeEmpty();
         return this;
     }
 
@@ -121,9 +109,5 @@ public final class PeoplePage {
                         && response.request().postData().contains(operation),
                 action
         );
-    }
-
-    private Locator row(String username) {
-        return rows.filter(new Locator.FilterOptions().setHasText(username));
     }
 }
