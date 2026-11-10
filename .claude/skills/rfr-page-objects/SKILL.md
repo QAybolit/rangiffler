@@ -28,9 +28,14 @@ Before writing, inspect the page in the running app (Playwright MCP snapshot, if
    Never print secrets: omit passwords/tokens from the step text (or use a masked value).
 7. **Page URL is `public static final String URL`.** Each page that has its own URL declares it, built from
    `TestConfig` (e.g. `public static final String URL = TestConfig.frontUrl() + "/profile";`). Do not hardcode hosts.
-8. **Checks use Playwright conditions.** Use `PlaywrightAssertions.assertThat(...)` (`isVisible()`, `hasText()`,
-   `hasValue()`, `hasURL()`, ...), which auto-retry. Do not use `Thread.sleep`, `isVisible()` booleans with
-   JUnit asserts, or manual waits, unless the user explicitly asks for something else.
+8. **Checks use only Playwright web-first assertions.** Every check in a PO is a
+   `PlaywrightAssertions.assertThat(...)` call on a `Locator`, `Page` or `APIResponse` (`isVisible()`, `hasText()`,
+   `hasValue()`, `hasURL()`, ...), which auto-retries. Any other assertion is forbidden in a PO or a component:
+   no JUnit `Assertions.*`, AssertJ, Hamcrest, and no Java `assert`. Do not read a
+   value (`textContent()`, `innerText()`, `inputValue()`, `getAttribute()`, `isVisible()`, `count()`, ...) to compare it
+   by hand or to feed such an assertion, because it reads once and does not retry. Do not use `Thread.sleep` or manual
+   waits for a check either. Waiting for a response of an action, as in rule 11, is not a check and stays allowed.
+   The prohibition applies unless the user explicitly asks for something else.
 
 9. **Constructor does only assignment.** The constructor takes `Page` (or a component's root `Locator`) and does
    nothing except assign it to `private final Page page` and initialise the PO's `private final` fields
