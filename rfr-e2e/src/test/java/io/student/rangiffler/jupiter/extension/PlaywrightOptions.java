@@ -25,10 +25,12 @@ public final class PlaywrightOptions implements OptionsFactory {
                 .setBrowserName(TestConfig.browser())
                 .setHeadless(TestConfig.headless())
                 .setTestIdAttribute(TEST_ID_ATTRIBUTE)
-                .setContextOptions(
-                        new Browser.NewContextOptions()
-                                .setLocale(TestConfig.browserLocale().toLanguageTag())
-                                .setViewportSize(TestConfig.viewportWidth(), TestConfig.viewportHeight())
-                );
+                .setContextOptions(contextOptions());
+    }
+
+    private static Browser.NewContextOptions contextOptions() {
+        return new Browser.NewContextOptions()
+                .setLocale(TestConfig.browserLocale().toLanguageTag())
+                .setViewportSize(TestConfig.viewportWidth(), TestConfig.viewportHeight());
     }
 }
