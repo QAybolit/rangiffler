@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,29 +36,47 @@ public final class StandReadiness {
     }
 
     /**
-     * Polls the services that have not answered yet until all have answered or the limit is over; each request and each pause is cut to the time that is left.
+     * Polls the services that have not answered yet until all have answered or the limit is over; each request and each pause is cut to the time that is left, and no service is asked once the limit is over.
      */
     public void await() {
         long deadline = System.nanoTime() + limit.toNanos();
         List<StandService> silent = new ArrayList<>(services);
+        Set<StandService> asked = new HashSet<>();
         while (true) {
-            silent.removeIf(service -> service.answers(shorter(request, deadline)));
+            silent.removeIf(service -> {
+                if (deadline - System.nanoTime() <= 0) {
+                    return false;
+                }
+                asked.add(service);
+                return service.answers(shorter(request, deadline));
+            });
             if (silent.isEmpty()) {
                 return;
             }
             if (deadline - System.nanoTime() <= 0) {
-                throw new IllegalStateException(failure(silent));
+                throw new IllegalStateException(failure(silent, asked));
             }
             sleep(shorter(pause, deadline));
         }
     }
 
-    private String failure(List<StandService> silent) {
+    private String failure(List<StandService> silent, Set<StandService> asked) {
+        List<StandService> quiet = silent.stream().filter(asked::contains).toList();
+        List<StandService> unasked = silent.stream().filter(service -> !asked.contains(service)).toList();
         Set<String> commands = new LinkedHashSet<>();
-        silent.forEach(service -> commands.add(service.command()));
-        return "The stand is not ready after " + limit.toSeconds() + " s, no answer from "
-                + String.join(", ", silent.stream().map(StandService::name).toList())
-                + "; start it with " + String.join(" and ", commands);
+        quiet.forEach(service -> commands.add(service.command()));
+        String message = "The stand is not ready after " + limit.toSeconds() + " s";
+        if (!quiet.isEmpty()) {
+            message += ", no answer from " + names(quiet);
+        }
+        if (!unasked.isEmpty()) {
+            message += ", not asked before the limit ran out: " + names(unasked);
+        }
+        return quiet.isEmpty() ? message : message + "; start it with " + String.join(" and ", commands);
+    }
+
+    private static String names(List<StandService> services) {
+        return String.join(", ", services.stream().map(StandService::name).toList());
     }
 
     private void sleep(Duration duration) {
