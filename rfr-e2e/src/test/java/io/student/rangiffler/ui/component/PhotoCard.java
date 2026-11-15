@@ -1,6 +1,7 @@
 package io.student.rangiffler.ui.component;
 
 import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 
@@ -56,6 +57,6 @@ public final class PhotoCard {
     }
 
     private Locator button(String name) {
-        return root.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(name).setExact(true));
+        return root.page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(name).setExact(true));
     }
 }
