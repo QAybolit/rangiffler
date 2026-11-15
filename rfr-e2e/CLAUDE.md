@@ -28,6 +28,8 @@ Every UI test class carries its own `@UiTest` (it is not inherited from `BaseWeb
 ./gradlew :rfr-e2e:test                       # tests without the ui tag; no stand needed
 ./gradlew :rfr-e2e:test --tests '<TestClass>' # one test; with --tests the ui tag is not excluded
 ```
+`@UiTest` also brings `TraceExtension`: it records the Playwright trace of every UI test and keeps `trace.zip` only for a failed one, in `rfr-e2e/test-results/<class>/<method>/` and as an Allure attachment; `PlaywrightOptions` does not turn the Playwright trace on itself, so the two never collide. The extension takes the `BrowserContext` from the arguments of the `@BeforeEach` method of `BaseWebTest`, so that method must keep the `BrowserContext` parameter, otherwise no trace is recorded. Open the file with `./gradlew :rfr-e2e:showTrace -Ptrace=<path to trace.zip>`.
+
 The stand is awaited by `StandReadinessExtension` before the first class tagged `ui`, so both `e2e` and a UI test started from the IDE wait for it; there is no separate wait task.
 
 `UserExtensionTest` (tag `extension`) needs MySQL but no browser. Its nested sample classes are enabled only when the configuration parameter `rfr.testkit` is `true`, which the test sets itself, so they never run on their own. `@ProbeTarget` also carries the tag `probe`, and both `test` and `e2e` exclude it, with or without `--tests`: sample classes need the tag `ui` for `StandReadinessExtension`, and without this exclusion they would show up as skipped tests in every run. The exclusion does not touch EngineTestKit, which runs the samples itself.
@@ -87,7 +89,6 @@ It is listed above `MigrationCheckExtension` in `META-INF/services`, and the ord
 | `rfr.viewportWidth` / `rfr.viewportHeight` | `1920` / `1080` | Browser window size in pixels for all UI tests (set in `PlaywrightOptions`), each side on its own; a value that is not a whole number from 1 to 99999 fails the tests that open a browser |
 | `rfr.actionTimeout` | `5000` | Milliseconds a Playwright action or wait lasts in all UI tests (set in `BaseWebTest`); a value that is not a whole number from 1 to 999999 fails the tests that open a browser |
 | `rfr.navigationTimeout` | `30000` | Milliseconds a Playwright navigation lasts in all UI tests, with the same limits as `rfr.actionTimeout` |
-| `rfr.trace` | `off` | Playwright trace of every UI test: `off`, `on` or `retain-on-failure` (set in `PlaywrightOptions`); the file `trace.zip` goes to `rfr-e2e/test-results/<test>/` and opens with the Trace Viewer (`npx playwright show-trace <file>`) |
 | `rfr.staticUserTimeout` | `30` | Seconds `StaticUserFixture` waits for a free pooled user before failing |
 | `rfr.standTimeout` | `180` | Seconds `StandReadinessExtension` waits for MySQL, `rfr-auth`, `rfr-api` and the frontend; every request has its own 5 s timeout |
 | `rfr.standCheck` | `true` | `false` turns the wait for the stand off completely |

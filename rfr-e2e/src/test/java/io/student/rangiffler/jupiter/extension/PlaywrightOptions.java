@@ -8,7 +8,7 @@ import io.student.rangiffler.config.TestConfig;
 import java.util.Set;
 
 /**
- * Playwright options of the UI tests, taken from {@code TestConfig}, failing fast on an unknown browser, with the trace mode from {@code rfr.trace} and the test id attribute fixed to {@code data-test-id}.
+ * Playwright options of the UI tests, taken from {@code TestConfig}, failing fast on an unknown browser, with the trace left to {@code TraceExtension} and the test id attribute fixed to {@code data-test-id}.
  */
 public final class PlaywrightOptions implements OptionsFactory {
 
@@ -25,16 +25,7 @@ public final class PlaywrightOptions implements OptionsFactory {
                 .setBrowserName(TestConfig.browser())
                 .setHeadless(TestConfig.headless())
                 .setTestIdAttribute(TEST_ID_ATTRIBUTE)
-                .setTrace(trace())
                 .setContextOptions(contextOptions());
-    }
-
-    private static Options.Trace trace() {
-        return switch (TestConfig.trace()) {
-            case "on" -> Options.Trace.ON;
-            case "retain-on-failure" -> Options.Trace.RETAIN_ON_FAILURE;
-            default -> Options.Trace.OFF;
-        };
     }
 
     private static Browser.NewContextOptions contextOptions() {

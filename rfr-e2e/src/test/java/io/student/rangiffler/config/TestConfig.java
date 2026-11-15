@@ -2,7 +2,6 @@ package io.student.rangiffler.config;
 
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -29,7 +28,6 @@ public final class TestConfig {
     private static final String VIEWPORT_HEIGHT = value("viewportHeight", "1080");
     private static final String ACTION_TIMEOUT = value("actionTimeout", "5000");
     private static final String NAVIGATION_TIMEOUT = value("navigationTimeout", "30000");
-    private static final String TRACE = value("trace", "off");
 
     private TestConfig() {
     }
@@ -128,16 +126,6 @@ public final class TestConfig {
             throw new IllegalArgumentException("Invalid rfr.navigationTimeout \"" + NAVIGATION_TIMEOUT + "\", expected a whole number of milliseconds from 1 to 999999");
         }
         return Double.parseDouble(NAVIGATION_TIMEOUT);
-    }
-
-    /**
-     * Returns the Playwright trace mode from {@code rfr.trace}, one of {@code off}, {@code on} and {@code retain-on-failure}; checked on demand so a bad value breaks only the tests that open a browser.
-     */
-    public static String trace() {
-        if (!List.of("off", "on", "retain-on-failure").contains(TRACE)) {
-            throw new IllegalArgumentException("Invalid rfr.trace \"" + TRACE + "\", expected off, on or retain-on-failure");
-        }
-        return TRACE;
     }
 
     /**
