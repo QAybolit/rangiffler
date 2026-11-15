@@ -46,13 +46,19 @@ class MyTravelsMockTest extends BaseWebTest {
     }
 
     @Test
-    @DisplayName("On the mock feed the Photo actions menu is only on own photos")
-    void shouldOfferActionsOnlyOnOwnPhotos(@User TestUser user) {
-        MyTravelsPage feed = openFeed(user).showWithFriends();
+    @DisplayName("On the mock feed the Photo actions menu is on own photos")
+    void shouldOfferActionsOnOwnPhotos(@User TestUser user) {
+        MyTravelsPage feed = openFeed(user);
         feed.photo("Амстердам!").shouldHaveCountry("Netherlands").shouldHaveActions();
         feed.photo("Париж!").shouldHaveCountry("France").shouldHaveActions();
         feed.photo("Петербург!").shouldHaveCountry("Russian Federation").shouldHaveActions();
         feed.photo("Нью-Йорк!").shouldHaveCountry("United States").shouldHaveActions();
+    }
+
+    @Test
+    @DisplayName("On the mock feed the Photo actions menu is not on the photos of friends")
+    void shouldNotOfferActionsOnFriendsPhotos(@User TestUser user) {
+        MyTravelsPage feed = openFeed(user).showWithFriends();
         feed.photo("Старая Прага завораживает!").shouldHaveCountry("Czech Republic").shouldNotHaveActions();
         feed.photo("Мюнхен - мой любимый город!").shouldHaveCountry("Germany").shouldNotHaveActions();
         feed.photo("Обожаю Таиланд!").shouldHaveCountry("Thailand").shouldNotHaveActions();

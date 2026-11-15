@@ -57,7 +57,10 @@ public final class TraceExtension implements InvocationInterceptor, AfterEachCal
     public void afterEach(ExtensionContext extensionContext) {
         BrowserContext context = extensionContext.getStore(NAMESPACE).get(BrowserContext.class, BrowserContext.class);
         if (context == null) {
-            return;
+            throw new IllegalStateException(
+                    "No @BeforeEach method of " + extensionContext.getRequiredTestClass().getName()
+                            + " takes a BrowserContext, so the trace of the test was not recorded"
+            );
         }
         if (extensionContext.getExecutionException().isEmpty()) {
             context.tracing().stop();
