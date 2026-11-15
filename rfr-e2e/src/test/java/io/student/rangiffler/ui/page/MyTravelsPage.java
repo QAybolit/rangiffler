@@ -64,6 +64,28 @@ public final class MyTravelsPage {
         return this;
     }
 
+    @Step("Show the travels with friends and wait for GetFeed query")
+    public MyTravelsPage showWithFriends() {
+        page.waitForResponse(
+                response -> response.url().endsWith("/graphql")
+                        && response.request().postData() != null
+                        && response.request().postData().contains("GetFeed"),
+                () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("With friends").setExact(true)).click()
+        );
+        return this;
+    }
+
+    @Step("Show only my travels and wait for GetFeed query")
+    public MyTravelsPage showOnlyMyTravels() {
+        page.waitForResponse(
+                response -> response.url().endsWith("/graphql")
+                        && response.request().postData() != null
+                        && response.request().postData().contains("GetFeed"),
+                () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Only my travels").setExact(true)).click()
+        );
+        return this;
+    }
+
     @Step("Open the list of visited countries")
     public MyTravelsPage openCountries() {
         visitedButton.click();

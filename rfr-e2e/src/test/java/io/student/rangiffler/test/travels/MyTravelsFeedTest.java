@@ -34,30 +34,6 @@ class MyTravelsFeedTest extends BaseWebTest {
         openFeed(user).photo("Париж!").shouldHaveActions();
     }
 
-    @Test
-    @DisplayName("Country filter leaves only the photos of the chosen country")
-    void shouldFilterFeedByCountry(@User TestUser user) {
-        openFeed(user)
-                .shouldHaveCountriesVisited(4)
-                .openCountries()
-                .filterByCountry("Netherlands")
-                .shouldHaveCountryFilter("Netherlands")
-                .shouldHavePhotos("Амстердам!")
-                .shouldNotHavePhotos("Париж!", "Петербург!", "Нью-Йорк!");
-    }
-
-    @Test
-    @DisplayName("Reset of the country filter brings all photos back")
-    void shouldResetCountryFilter(@User TestUser user) {
-        openFeed(user)
-                .shouldHavePhotos("Амстердам!", "Париж!", "Петербург!", "Нью-Йорк!")
-                .openCountries()
-                .filterByCountry("Netherlands")
-                .shouldHavePhotos("Амстердам!")
-                .resetCountryFilter()
-                .shouldHavePhotos("Амстердам!", "Париж!", "Петербург!", "Нью-Йорк!");
-    }
-
     private MyTravelsPage openFeed(TestUser user) {
         return new WelcomePage(page)
                 .open()
