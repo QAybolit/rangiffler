@@ -66,6 +66,17 @@ Before writing, inspect the page in the running app (Playwright MCP snapshot, if
     }
     ```
 
+12. **Component locators: role and unique text, actions inside the component, no `nth()`/`first()`.** A component
+    (a card, a row, a list item) is found by its role and its unique text, for example
+    `getByRole(AriaRole.ARTICLE).filter(new Locator.FilterOptions().setHasText(description))`, and its root `Locator` is
+    the only thing the component class receives. Every action and check of the component goes through locators built
+    inside that root (`root.getByRole(...)`), never through `page.getByRole(...)`, because a page-level locator matches
+    the same button of every card and breaks with a strict mode violation. Never pick an element by position:
+    `nth()`, `first()`, `last()` and an index in a loop are forbidden, because the order of the elements is not a
+    property of the business object and changes with the data and the layout. If the text is not unique, make it
+    unique in the locator (an exact match or a second filter) or ask for an accessible name or a `data-test-id` in the
+    frontend; do not fall back to a position. The prohibition applies unless the user explicitly asks for something else.
+
 ## Conventions
 
 - Locators are `private final Locator` fields initialised in the constructor / field initialiser; prefer
