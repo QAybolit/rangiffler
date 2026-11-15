@@ -51,12 +51,15 @@ public final class TraceExtension implements InvocationInterceptor, AfterEachCal
     }
 
     /**
-     * Runs after the test and its {@code @AfterEach} methods but before Playwright closes the context, so the trace can still be stopped; a test that passed discards it.
+     * Runs after the test and its {@code @AfterEach} methods but before Playwright closes the context, so the trace can still be stopped; a test that passed discards it. A test without a started trace fails here only if it passed, so the real cause of an earlier failure, such as a user that was not created, is not hidden.
      */
     @Override
     public void afterEach(ExtensionContext extensionContext) {
         BrowserContext context = extensionContext.getStore(NAMESPACE).get(BrowserContext.class, BrowserContext.class);
         if (context == null) {
+            if (extensionContext.getExecutionException().isPresent()) {
+                return;
+            }
             throw new IllegalStateException(
                     "No @BeforeEach method of " + extensionContext.getRequiredTestClass().getName()
                             + " takes a BrowserContext, so the trace of the test was not recorded"
