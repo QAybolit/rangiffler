@@ -21,7 +21,7 @@ public final class PeoplePage {
 
     public PeoplePage(Page page) {
         this.page = page;
-        this.friendsTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Friendz"));
+        this.friendsTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Friends"));
         this.allPeopleTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("All People"));
         this.incomeInvitationsTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Income invitations"));
         this.outcomeInvitationsTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Outcome invitations"));
