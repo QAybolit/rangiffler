@@ -83,6 +83,24 @@ class StandReadinessExtensionTest {
         }
     }
 
+    @Test
+    @DisplayName("A class without the ui tag sends no request to the service although the check is on")
+    void shouldSendNoRequestWhenClassIsNotTaggedUi() throws IOException {
+        AtomicInteger requests = new AtomicInteger();
+        HttpServer server = server(requests, Duration.ofDays(1));
+        try {
+            EngineExecutionResults results = run(server, 1, NotUi.class);
+
+            assertEquals(
+                    List.of(0, 1L),
+                    List.of(requests.get(), results.testEvents().succeeded().count()),
+                    "The service got a request or the test did not run for a class without the ui tag"
+            );
+        } finally {
+            server.stop(0);
+        }
+    }
+
     private static HttpServer server(AtomicInteger requests, Duration delay) throws IOException {
         long readyAt = System.nanoTime() + delay.toNanos();
         HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
@@ -168,6 +186,20 @@ class StandReadinessExtensionTest {
 
         @RegisterExtension
         static final StandReadinessExtension READINESS = new StandReadinessExtension(context -> false, StandReadinessExtensionTest::stand);
+
+        @Test
+        void body() {
+        }
+    }
+
+    /**
+     * Sample class without the tag {@code ui}, whose check is on and whose stand never answers.
+     */
+    @ProbeTarget
+    static class NotUi {
+
+        @RegisterExtension
+        static final StandReadinessExtension READINESS = new StandReadinessExtension(context -> true, StandReadinessExtensionTest::stand);
 
         @Test
         void body() {
