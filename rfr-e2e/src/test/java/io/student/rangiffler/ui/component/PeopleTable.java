@@ -2,7 +2,6 @@ package io.student.rangiffler.ui.component;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
@@ -15,7 +14,7 @@ public final class PeopleTable {
 
     public PeopleTable(Page page) {
         this.page = page;
-        this.rows = page.getByRole(AriaRole.TABLE).getByRole(AriaRole.ROW).filter(new Locator.FilterOptions().setHas(page.getByRole(AriaRole.CELL)));
+        this.rows = page.getByTestId("people-row");
         this.emptyState = page.getByText("There are no users yet");
     }
 
@@ -48,6 +47,6 @@ public final class PeopleTable {
     }
 
     private Locator rowOf(String username) {
-        return rows.filter(new Locator.FilterOptions().setHas(page.getByRole(AriaRole.CELL, new Page.GetByRoleOptions().setName(username).setExact(true))));
+        return rows.filter(new Locator.FilterOptions().setHas(page.getByText(username, new Page.GetByTextOptions().setExact(true))));
     }
 }
