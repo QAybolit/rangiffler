@@ -126,14 +126,14 @@ tasks.register('installPlaywright', JavaExec) {
 }
 
 tasks.register('showTrace', JavaExec) {
-    description = 'Opens trace.zip in the Playwright Trace Viewer: -Ptrace=<path to trace.zip>'
+    description = 'Opens trace.zip in the Playwright Trace Viewer: -Ptrace=<path to trace.zip from the repository root>'
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.microsoft.playwright.CLI'
     doFirst {
         if (!project.hasProperty('trace')) {
             throw new GradleException('Pass the file: ./gradlew :rfr-e2e:showTrace -Ptrace=<path to trace.zip>')
         }
-        args 'show-trace', file(project.property('trace')).absolutePath
+        args 'show-trace', rootProject.file(project.property('trace')).absolutePath
     }
 }
 
