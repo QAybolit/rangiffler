@@ -103,6 +103,41 @@ class StandReadinessTest {
         assertTrue(Duration.ofNanos(System.nanoTime() - started).compareTo(Duration.ofSeconds(3)) < 0, "The wait went on long after its limit");
     }
 
+    @Test
+    @DisplayName("Does not ask the next service once the limit ran out during the previous request")
+    void shouldNotAskServiceAfterLimitIsOver() {
+        AtomicInteger calls = new AtomicInteger();
+        assertThrows(
+                IllegalStateException.class,
+                () -> new StandReadiness(
+                        List.of(new Slow("slow", "start slow", Duration.ofSeconds(60)), new Fake("next", "start next", Integer.MAX_VALUE, calls)),
+                        Duration.ofMillis(200), Duration.ofMillis(20), Duration.ofSeconds(60)
+                ).await(),
+                "The wait did not fail when the first service used up the whole limit"
+        );
+
+        assertEquals(0, calls.get(), "A service was asked after the limit was over");
+    }
+
+    @Test
+    @DisplayName("Names a service that was never asked because the limit ran out as not asked, not as silent")
+    void shouldNameServiceThatWasNotAskedSeparately() {
+        String message = assertThrows(
+                IllegalStateException.class,
+                () -> new StandReadiness(
+                        List.of(new Slow("slow", "start slow", Duration.ofSeconds(60)), new Fake("up", "start up", 1, new AtomicInteger())),
+                        Duration.ofMillis(200), Duration.ofMillis(20), Duration.ofSeconds(60)
+                ).await(),
+                "The wait did not fail when the first service used up the whole limit"
+        ).getMessage();
+
+        assertEquals(
+                "The stand is not ready after 0 s, no answer from slow, not asked before the limit ran out: up; start it with start slow",
+                message,
+                "The message named a service that was never asked as silent or did not name it at all"
+        );
+    }
+
     private record Fake(String name, String command, int answersOn, AtomicInteger calls) implements StandService {
 
         @Override
