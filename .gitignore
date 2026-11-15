@@ -42,3 +42,4 @@ docs/
 .claude/.*.bak
 
 test-results/
+.allure/
