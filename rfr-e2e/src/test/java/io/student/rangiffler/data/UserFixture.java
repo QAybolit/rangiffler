@@ -1,54 +1,18 @@
 package io.student.rangiffler.data;
 
-import io.qameta.allure.Allure;
-
-import static io.student.rangiffler.utils.RandomDataUtils.randomPassword;
-import static io.student.rangiffler.utils.RandomDataUtils.randomUsername;
-
 /**
- * Owns a test user's lifecycle: creates it in the database and removes it on close.
+ * A test user prepared in the databases before a test and removed after it.
  */
-public final class UserFixture implements AutoCloseable {
-
-    private final TestUser user = new TestUser(randomUsername(), randomPassword());
-
-    private UserFixture() {
-    }
+public interface UserFixture extends AutoCloseable {
 
     /**
-     * Creates a random user in the auth database and cleans up after itself if that fails.
+     * Returns the prepared user.
      */
-    public static UserFixture create() {
-        UserFixture fixture = new UserFixture();
-        try {
-            Allure.step("Create user '" + fixture.user.username() + "' in auth DB",
-                    () -> AuthUserRepository.createUser(fixture.user.username(), fixture.user.password()));
-        } catch (RuntimeException | Error e) {
-            try {
-                fixture.close();
-            } catch (RuntimeException | Error closeFailure) {
-                e.addSuppressed(closeFailure);
-            }
-            throw e;
-        }
-        return fixture;
-    }
-
-    public TestUser user() {
-        return user;
-    }
+    TestUser user();
 
     /**
-     * Removes the user from the api and auth databases.
+     * Removes everything the fixture created.
      */
     @Override
-    public void close() {
-        try {
-            Allure.step("Delete user '" + user.username() + "' from api DB",
-                    () -> ApiUserRepository.deleteUser(user.username()));
-        } finally {
-            Allure.step("Delete user '" + user.username() + "' from auth DB",
-                    () -> AuthUserRepository.deleteUser(user.username()));
-        }
-    }
+    void close();
 }

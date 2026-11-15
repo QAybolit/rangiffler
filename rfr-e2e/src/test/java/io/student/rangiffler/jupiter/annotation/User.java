@@ -11,4 +11,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface User {
+
+    int friends() default 0;
+
+    int incomeInvitations() default 0;
+
+    int outcomeInvitations() default 0;
 }
