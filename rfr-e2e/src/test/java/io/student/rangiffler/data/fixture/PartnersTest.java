@@ -1,5 +1,6 @@
-package io.student.rangiffler.data;
+package io.student.rangiffler.data.fixture;
 
+import io.student.rangiffler.data.TestUser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

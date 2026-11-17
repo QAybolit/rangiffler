@@ -2,9 +2,9 @@ package io.student.rangiffler.test.people;
 
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import io.student.rangiffler.data.BaseUserFixture;
+import io.student.rangiffler.data.fixture.BaseUserFixture;
 import io.student.rangiffler.data.TestUser;
-import io.student.rangiffler.data.UserFixture;
+import io.student.rangiffler.data.fixture.UserFixture;
 import io.student.rangiffler.jupiter.annotation.UiTest;
 import io.student.rangiffler.jupiter.annotation.User;
 import org.junit.jupiter.api.DisplayName;

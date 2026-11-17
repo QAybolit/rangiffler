@@ -1,5 +1,9 @@
 package io.student.rangiffler.data;
 
+import io.student.rangiffler.data.fixture.BaseUserFixture;
+import io.student.rangiffler.data.fixture.UserFixture;
+import io.student.rangiffler.data.fixture.UserWithRelationsFixture;
+
 /**
  * What a test asks of its user: how many friends, incoming and outgoing invitations it must have.
  */

@@ -1,4 +1,6 @@
-package io.student.rangiffler.data;
+package io.student.rangiffler.data.fixture;
+
+import io.student.rangiffler.data.TestUser;
 
 /**
  * A test user prepared in the databases before a test and removed after it.

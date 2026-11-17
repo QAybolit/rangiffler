@@ -1,6 +1,6 @@
 package io.student.rangiffler.jupiter.probe;
 
-import io.student.rangiffler.data.StaticUserFixture;
+import io.student.rangiffler.data.fixture.StaticUserFixture;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.jupiter.annotation.StaticUser;
 import io.student.rangiffler.jupiter.extension.UsersQueueExtension;

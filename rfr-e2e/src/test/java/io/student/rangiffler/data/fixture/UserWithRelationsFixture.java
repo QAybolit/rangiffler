@@ -1,4 +1,7 @@
-package io.student.rangiffler.data;
+package io.student.rangiffler.data.fixture;
+
+import io.student.rangiffler.data.Relation;
+import io.student.rangiffler.data.TestUser;
 
 /**
  * Adds partners linked in one {@link Relation}, each a user of its own, to the user of another fixture.

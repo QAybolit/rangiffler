@@ -1,7 +1,7 @@
 package io.student.rangiffler.jupiter.probe;
 
 import io.student.rangiffler.data.TestUser;
-import io.student.rangiffler.data.UserFixture;
+import io.student.rangiffler.data.fixture.UserFixture;
 import io.student.rangiffler.data.db.ApiUserRepository;
 import io.student.rangiffler.data.db.AuthUserRepository;
 import io.student.rangiffler.data.db.Friendship;

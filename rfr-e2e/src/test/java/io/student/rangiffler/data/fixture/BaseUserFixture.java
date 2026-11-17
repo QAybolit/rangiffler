@@ -1,6 +1,7 @@
-package io.student.rangiffler.data;
+package io.student.rangiffler.data.fixture;
 
 import io.qameta.allure.Allure;
+import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.db.ApiUserRepository;
 import io.student.rangiffler.data.db.AuthUserRepository;
 
