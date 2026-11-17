@@ -2,68 +2,48 @@ package io.student.rangiffler.jupiter.extension;
 
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Tracing;
+import com.microsoft.playwright.impl.junit.BrowserContextExtension;
 import io.qameta.allure.Allure;
 import io.qameta.allure.AttachmentOptions;
 import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.InvocationInterceptor;
-import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Records the Playwright trace of every UI test and keeps {@code trace.zip}, attached to the Allure report, only for the tests that failed; the browser context is the one that Playwright has resolved for the {@code @BeforeEach} method of the test.
+ * Records the Playwright trace of every UI test and keeps {@code trace.zip}, attached to the Allure report, only for the tests that failed; the browser context is the one that {@code BrowserContextExtension} of Playwright creates for the test.
  */
-public final class TraceExtension implements InvocationInterceptor, AfterEachCallback {
+public final class TraceExtension implements BeforeEachCallback, AfterEachCallback {
 
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(TraceExtension.class);
 
     /**
-     * Starts the trace before the first {@code @BeforeEach} method that takes a {@code BrowserContext}, so its steps are recorded too.
+     * Starts the trace before the {@code @BeforeEach} methods run, so their steps are recorded too.
      */
     @Override
-    public void interceptBeforeEachMethod(
-            Invocation<Void> invocation,
-            ReflectiveInvocationContext<Method> invocationContext,
-            ExtensionContext extensionContext
-    ) throws Throwable {
-        ExtensionContext.Store store = extensionContext.getStore(NAMESPACE);
-        if (store.get(BrowserContext.class) == null) {
-            invocationContext.getArguments().stream()
-                    .filter(BrowserContext.class::isInstance)
-                    .map(BrowserContext.class::cast)
-                    .findFirst()
-                    .ifPresent(context -> {
-                        context.tracing().start(new Tracing.StartOptions()
-                                .setScreenshots(true)
-                                .setSnapshots(true)
-                                .setSources(true)
-                                .setTitle(extensionContext.getDisplayName()));
-                        store.put(BrowserContext.class, context);
-                    });
-        }
-        invocation.proceed();
+    public void beforeEach(ExtensionContext extensionContext) {
+        BrowserContext context = BrowserContextExtension.getOrCreateBrowserContext(extensionContext);
+        context.tracing().start(new Tracing.StartOptions()
+                .setScreenshots(true)
+                .setSnapshots(true)
+                .setSources(true)
+                .setTitle(extensionContext.getDisplayName()));
+        extensionContext.getStore(NAMESPACE).put(BrowserContext.class, context);
     }
 
     /**
-     * Runs after the test and its {@code @AfterEach} methods but before Playwright closes the context, so the trace can still be stopped; a test that passed discards it. A test without a started trace fails here only if it passed, so the real cause of an earlier failure, such as a user that was not created, is not hidden.
+     * Runs after the test and its {@code @AfterEach} methods but before Playwright closes the context, so the trace can still be stopped; a test that passed discards it, and a test whose trace did not start, because an earlier extension failed first, has nothing to stop.
      */
     @Override
     public void afterEach(ExtensionContext extensionContext) {
         BrowserContext context = extensionContext.getStore(NAMESPACE).get(BrowserContext.class, BrowserContext.class);
         if (context == null) {
-            if (extensionContext.getExecutionException().isPresent()) {
-                return;
-            }
-            throw new IllegalStateException(
-                    "No @BeforeEach method of " + extensionContext.getRequiredTestClass().getName()
-                            + " takes a BrowserContext, so the trace of the test was not recorded"
-            );
+            return;
         }
         if (extensionContext.getExecutionException().isEmpty()) {
             context.tracing().stop();
