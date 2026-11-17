@@ -11,43 +11,59 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
-import java.lang.reflect.Parameter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * Creates a {@code @User} test user before each test, passes it as a parameter and removes it afterwards.
+ * Creates a test user for every {@code @User} parameter before each test, passes them as parameters and removes them afterwards.
  */
 public final class UserExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
 
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(UserExtension.class);
 
     /**
-     * Creates the user when the test method has a {@code @User} parameter and fails before creating anything when it has more than one.
+     * Creates one user per {@code @User} parameter of the test method, validating every request first and registering each fixture in the store as soon as it exists so a failure on a later one still closes the earlier ones.
      */
     @Override
     public void beforeEach(ExtensionContext context) {
-        List<Parameter> requested = Arrays.stream(context.getRequiredTestMethod().getParameters())
+        List<UserRequest> requested = context.getTestMethod().stream()
+                .flatMap(method -> Arrays.stream(method.getParameters()))
                 .filter(parameter -> parameter.isAnnotationPresent(User.class))
-                .toList();
-        if (requested.size() > 1) {
-            throw new IllegalStateException("Test method has " + requested.size() + " @User parameters, only one is supported");
-        }
-        requested.stream()
-                .findFirst()
                 .map(parameter -> parameter.getAnnotation(User.class))
                 .map(user -> new UserRequest(user.friends(), user.incomeInvitations(), user.outcomeInvitations()))
-                .ifPresent(request -> context.getStore(NAMESPACE).put(context.getUniqueId(), request.fixture()));
+                .toList();
+        if (!requested.isEmpty()) {
+            List<UserFixture> fixtures = new ArrayList<>();
+            context.getStore(NAMESPACE).put(context.getUniqueId(), fixtures);
+            for (UserRequest request : requested) {
+                fixtures.add(request.fixture());
+            }
+        }
     }
 
     /**
-     * Closes the user fixture created for the test, if any.
+     * Closes the user fixtures created for the test in reverse order, keeping the first failure and suppressing the rest.
      */
     @Override
     public void afterEach(ExtensionContext context) {
-        UserFixture fixture = context.getStore(NAMESPACE).remove(context.getUniqueId(), UserFixture.class);
-        if (fixture != null) {
-            fixture.close();
+        List<UserFixture> fixtures = context.getStore(NAMESPACE).remove(context.getUniqueId(), List.class);
+        RuntimeException failure = null;
+        if (fixtures != null) {
+            for (UserFixture fixture : fixtures.reversed()) {
+                try {
+                    fixture.close();
+                } catch (RuntimeException e) {
+                    if (failure == null) {
+                        failure = e;
+                    } else {
+                        failure.addSuppressed(e);
+                    }
+                }
+            }
+        }
+        if (failure != null) {
+            throw failure;
         }
     }
 
@@ -61,13 +77,19 @@ public final class UserExtension implements BeforeEachCallback, AfterEachCallbac
     }
 
     /**
-     * Returns the user created for the current test and fails when the annotated parameter belongs to another method than the test method, where it would silently share the test's user.
+     * Returns the user created for the parameter and fails when the annotated parameter belongs to another method than the test method, where it would silently share a test's user.
      */
     @Override
     public TestUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
         if (!parameterContext.getDeclaringExecutable().equals(extensionContext.getRequiredTestMethod())) {
             throw new ParameterResolutionException("@User is supported only on a parameter of the test method");
         }
-        return extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), UserFixture.class).user();
+        long position = Arrays.stream(extensionContext.getRequiredTestMethod().getParameters())
+                .limit(parameterContext.getIndex())
+                .filter(parameter -> parameter.isAnnotationPresent(User.class))
+                .count();
+        return ((List<UserFixture>) extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), List.class))
+                .get((int) position)
+                .user();
     }
 }

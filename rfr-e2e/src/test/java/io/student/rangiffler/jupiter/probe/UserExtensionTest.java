@@ -28,6 +28,7 @@ import org.junit.platform.testkit.engine.EngineTestKit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
@@ -187,14 +188,19 @@ class UserExtensionTest {
     }
 
     @Test
-    @DisplayName("A test with two @User parameters fails before any user is created instead of sharing one user")
-    void shouldFailTestWithTwoUserParameters() {
+    @DisplayName("A test with two @User parameters gets two different users that both exist in the body and are both removed afterwards")
+    void shouldCreateAndRemoveEveryUserOfTwoUserParameters() {
         EngineExecutionResults results = run(TwoUserParameters.class);
+        List<String> usernames = List.of(values(results, "store.before").getFirst().split(","));
 
         assertEquals(
-                List.of("Test method has 2 @User parameters, only one is supported", List.of("absent")),
-                List.of(failure(results).getMessage(), values(results, "store.after")),
-                "Test with two @User parameters did not fail for that reason before the user was created"
+                List.of(2, List.of(existence(true), existence(true)), List.of(existence(false), existence(false))),
+                List.of(
+                        (int) usernames.stream().distinct().count(),
+                        values(results, "inBody"),
+                        usernames.stream().map(username -> existence(username)).toList()
+                ),
+                "Two @User parameters did not give two distinct users that exist in the body and are removed afterwards"
         );
     }
 
@@ -296,8 +302,10 @@ class UserExtensionTest {
         }
 
         private static Optional<String> held(ExtensionContext context) {
-            return Optional.ofNullable(context.getStore(NAMESPACE).get(context.getUniqueId(), UserFixture.class))
-                    .map(fixture -> fixture.user().username());
+            return Optional.ofNullable(context.getStore(NAMESPACE).get(context.getUniqueId(), List.class))
+                    .map(fixtures -> ((List<UserFixture>) fixtures).stream()
+                            .map(fixture -> fixture.user().username())
+                            .collect(Collectors.joining(",")));
         }
     }
 
@@ -389,7 +397,9 @@ class UserExtensionTest {
     static class TwoUserParameters {
 
         @Test
-        void body(@User(friends = 1) TestUser first, @User(friends = 5) TestUser second) {
+        void body(@User(friends = 1) TestUser first, @User(friends = 5) TestUser second, TestReporter reporter) {
+            reporter.publishEntry("inBody", existence(first.username()));
+            reporter.publishEntry("inBody", existence(second.username()));
         }
     }
 
