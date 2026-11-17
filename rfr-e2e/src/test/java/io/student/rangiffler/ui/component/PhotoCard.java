@@ -14,14 +14,9 @@ public final class PhotoCard {
         this.root = root;
     }
 
-    @Step("Click 'like' and wait for LikePhoto mutation")
+    @Step("Click 'like'")
     public PhotoCard clickLike() {
-        root.page().waitForResponse(
-                response -> response.url().endsWith("/graphql")
-                        && response.request().postData() != null
-                        && response.request().postData().contains("LikePhoto"),
-                () -> button("like").click()
-        );
+        button("like").click();
         return this;
     }
 

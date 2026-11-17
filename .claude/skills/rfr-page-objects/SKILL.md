@@ -34,7 +34,7 @@ Before writing, inspect the page in the running app (Playwright MCP snapshot, if
    no JUnit `Assertions.*`, AssertJ, Hamcrest, and no Java `assert`. Do not read a
    value (`textContent()`, `innerText()`, `inputValue()`, `getAttribute()`, `isVisible()`, `count()`, ...) to compare it
    by hand or to feed such an assertion, because it reads once and does not retry. Do not use `Thread.sleep` or manual
-   waits for a check either. Waiting for a response of an action, as in rule 11, is not a check and stays allowed.
+   waits for a check either, and do not wait for the network (rule 13).
    The prohibition applies unless the user explicitly asks for something else.
 
 9. **Constructor does only assignment.** The constructor takes `Page` (or a component's root `Locator`) and does
@@ -47,21 +47,18 @@ Before writing, inspect the page in the running app (Playwright MCP snapshot, if
     Add only checks that verify a business result (e.g. `shouldHaveUsername(...)`, `shouldHaveSuccessMessage()`)
     as regular `should...` methods, and call them from the test where that result matters.
 
-11. **Save actions wait for the GraphQL mutation.** A PO method that submits data to the backend (e.g.
-    `clickSave()` on the profile page) must wait for the response of the matching GraphQL operation (e.g.
-    `UpdateUser`) with `page.waitForResponse(predicate, button::click)`, otherwise a following `reload()` or
-    navigation outruns the mutation and loses the changes. Match the response by URL (`/graphql`) and the
-    operation name in the request body:
+11. **Save actions wait for a visible result.** A PO method that submits data to the backend (e.g. `clickSave()` on
+    the profile page) finishes only when the UI shows that the action is done, otherwise a following `reload()` or
+    navigation outruns it and loses the changes. Wait for that visible result with a web-first assertion inside the
+    action: a success message, a button that is enabled again, a field that shows the new value. If the page shows
+    no such result, do not fall back to the network (rule 13); ask for a visible result or a `data-test-id` in the
+    frontend:
 
     ```java
-    @Step("Click 'Save' and wait for UpdateUser mutation")
+    @Step("Click 'Save'")
     public ProfilePage clickSave() {
-      page.waitForResponse(
-          response -> response.url().endsWith("/graphql")
-              && response.request().postData() != null
-              && response.request().postData().contains("UpdateUser"),
-          saveButton::click
-      );
+      saveButton.click();
+      assertThat(successMessage).isVisible();
       return this;
     }
     ```
@@ -76,6 +73,15 @@ Before writing, inspect the page in the running app (Playwright MCP snapshot, if
     property of the business object and changes with the data and the layout. If the text is not unique, make it
     unique in the locator (an exact match or a second filter) or ask for an accessible name or a `data-test-id` in the
     frontend; do not fall back to a position. The prohibition applies unless the user explicitly asks for something else.
+
+13. **A PO knows nothing about the transport.** A Page Object and a component work only with what the user sees and
+    must not depend on whether the frontend talks to the backend through REST, GraphQL or anything else. Forbidden
+    in `ui/`: `waitForResponse`, `waitForRequest`, `Response`, `Request`, `page.route`, `response.url()`,
+    `postData()`, a URL or a path of the API (`/graphql`, `/api/...`), an operation name (`GetFeed`, `UpdateUser`),
+    an HTTP status or a header. Synchronise with the UI instead: a web-first assertion on a visible result (rule 11)
+    or on the state after the action. `TestConfig.frontUrl()` for a page URL (rule 7) is not a transport detail.
+    Report an existing PO that violates this and do not rewrite it silently. The prohibition applies unless the user
+    explicitly asks for something else.
 
 ## Conventions
 

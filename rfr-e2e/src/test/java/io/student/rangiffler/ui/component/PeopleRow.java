@@ -14,14 +14,10 @@ public final class PeopleRow {
         this.root = root;
     }
 
-    @Step("Click 'Add' and wait for FriendshipAction mutation")
+    @Step("Click 'Add'")
     public PeopleRow clickAdd() {
-        root.page().waitForResponse(
-                response -> response.url().endsWith("/graphql")
-                        && response.request().postData() != null
-                        && response.request().postData().contains("FriendshipAction"),
-                () -> button("Add").click()
-        );
+        button("Add").click();
+        assertThat(root.getByText("Waiting...")).isVisible();
         return this;
     }
 

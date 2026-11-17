@@ -64,25 +64,19 @@ public final class MyTravelsPage {
         return this;
     }
 
-    @Step("Show the travels with friends and wait for GetFeed query")
+    @Step("Show the travels with friends")
     public MyTravelsPage showWithFriends() {
-        page.waitForResponse(
-                response -> response.url().endsWith("/graphql")
-                        && response.request().postData() != null
-                        && response.request().postData().contains("GetFeed"),
-                () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("With friends").setExact(true)).click()
-        );
+        Locator button = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("With friends").setExact(true));
+        button.click();
+        assertThat(button).hasAttribute("aria-pressed", "true");
         return this;
     }
 
-    @Step("Show only my travels and wait for GetFeed query")
+    @Step("Show only my travels")
     public MyTravelsPage showOnlyMyTravels() {
-        page.waitForResponse(
-                response -> response.url().endsWith("/graphql")
-                        && response.request().postData() != null
-                        && response.request().postData().contains("GetFeed"),
-                () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Only my travels").setExact(true)).click()
-        );
+        Locator button = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Only my travels").setExact(true));
+        button.click();
+        assertThat(button).hasAttribute("aria-pressed", "true");
         return this;
     }
 

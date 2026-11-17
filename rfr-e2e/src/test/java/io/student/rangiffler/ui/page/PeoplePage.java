@@ -7,6 +7,8 @@ import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
 import io.student.rangiffler.ui.component.PeopleTable;
 
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
 public final class PeoplePage {
 
     public static final String URL = TestConfig.frontUrl() + "/people";
@@ -31,25 +33,25 @@ public final class PeoplePage {
 
     @Step("Open 'Friends' tab")
     public PeoplePage openFriends() {
-        open(friendsTab, "GetFriends");
+        open(friendsTab);
         return this;
     }
 
     @Step("Open 'All People' tab")
     public PeoplePage openAllPeople() {
-        open(allPeopleTab, "GetPeople");
+        open(allPeopleTab);
         return this;
     }
 
     @Step("Open 'Income invitations' tab")
     public PeoplePage openIncomeInvitations() {
-        open(incomeInvitationsTab, "GetInvitations");
+        open(incomeInvitationsTab);
         return this;
     }
 
     @Step("Open 'Outcome invitations' tab")
     public PeoplePage openOutcomeInvitations() {
-        open(outcomeInvitationsTab, "GetOutcomeInvitations");
+        open(outcomeInvitationsTab);
         return this;
     }
 
@@ -60,7 +62,7 @@ public final class PeoplePage {
         return this;
     }
 
-    @Step("Click 'Add' for '{username}' and wait for FriendshipAction mutation")
+    @Step("Click 'Add' for '{username}'")
     public PeoplePage clickAdd(String username) {
         table.row(username).clickAdd();
         return this;
@@ -96,18 +98,8 @@ public final class PeoplePage {
         return this;
     }
 
-    private void open(Locator tab, String operation) {
-        if (!"true".equals(tab.getAttribute("aria-selected"))) {
-            waitForOperation(operation, () -> tab.click());
-        }
-    }
-
-    private void waitForOperation(String operation, Runnable action) {
-        page.waitForResponse(
-                response -> response.url().endsWith("/graphql")
-                        && response.request().postData() != null
-                        && response.request().postData().contains(operation),
-                action
-        );
+    private void open(Locator tab) {
+        tab.click();
+        assertThat(tab).hasAttribute("aria-selected", "true");
     }
 }

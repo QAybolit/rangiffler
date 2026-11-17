@@ -63,14 +63,10 @@ public final class ProfilePage {
         return this;
     }
 
-    @Step("Click 'Save' and wait for UpdateUser mutation")
+    @Step("Click 'Save'")
     public ProfilePage clickSave() {
-        page.waitForResponse(
-                response -> response.url().endsWith("/graphql")
-                        && response.request().postData() != null
-                        && response.request().postData().contains("UpdateUser"),
-                saveButton::click
-        );
+        saveButton.click();
+        assertThat(successMessage).isVisible();
         return this;
     }
 
