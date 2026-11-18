@@ -3,14 +3,12 @@ package io.student.rangiffler.jupiter.extension;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.impl.junit.BrowserExtension;
-import io.student.rangiffler.config.TestConfig;
 import io.student.rangiffler.data.GuestSession;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.UserSession;
 import io.student.rangiffler.data.fixture.SessionFixture;
 import io.student.rangiffler.jupiter.annotation.User;
-import io.student.rangiffler.ui.page.MyTravelsPage;
-import io.student.rangiffler.ui.page.WelcomePage;
+import io.student.rangiffler.ui.flow.SignIn;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -19,8 +17,6 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 /**
  * Opens an additional browser context for every {@code UserSession} and {@code GuestSession} parameter of a test, signs the {@code @User} user in through the UI, and closes the contexts after the test.
@@ -39,7 +35,7 @@ public final class SessionExtension implements ParameterResolver, AfterEachCallb
     }
 
     /**
-     * Opens the context, registers it for closing before anything else can fail, and signs the user in when the parameter asks for one.
+     * Opens the context, registers it for closing before anything else, such as reading a timeout setting, can fail, and signs the user in when the parameter asks for one.
      */
     @Override
     public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
@@ -55,10 +51,9 @@ public final class SessionExtension implements ParameterResolver, AfterEachCallb
             throw new ParameterResolutionException("UserSession needs @User, use GuestSession for a session without a user");
         }
         BrowserContext context = BrowserExtension.getOrCreateBrowser(extensionContext).newContext(PlaywrightOptions.contextOptions());
-        context.setDefaultTimeout(TestConfig.actionTimeout());
-        context.setDefaultNavigationTimeout(TestConfig.navigationTimeout());
         SessionFixture fixture = SessionFixture.create(context);
         opened(extensionContext).add(fixture);
+        ContextTimeouts.apply(context);
         if (guest) {
             return new GuestSession(fixture.page());
         }
@@ -79,8 +74,7 @@ public final class SessionExtension implements ParameterResolver, AfterEachCallb
     }
 
     private static void signIn(Page page, TestUser user) {
-        new WelcomePage(page).open().clickLogin().login(user.username(), user.password());
-        assertThat(page).hasURL(MyTravelsPage.URL);
+        new SignIn().signIn(page, user.username(), user.password());
     }
 
     private static Opened opened(ExtensionContext context) {
