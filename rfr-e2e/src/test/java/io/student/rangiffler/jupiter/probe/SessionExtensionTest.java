@@ -15,6 +15,7 @@ import io.student.rangiffler.jupiter.extension.PlaywrightOptions;
 import io.student.rangiffler.jupiter.extension.SessionExtension;
 import io.student.rangiffler.jupiter.extension.UserExtension;
 import io.student.rangiffler.ui.page.MyTravelsPage;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,10 @@ import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.testkit.engine.EngineExecutionResults;
 import org.junit.platform.testkit.engine.EngineTestKit;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -115,6 +120,42 @@ class SessionExtensionTest {
     }
 
     @Test
+    @DisplayName("A failed sign-in leaves the trace of the session context in the folder of the test")
+    void shouldKeepTraceOfSessionContextWhenSignInFails() throws IOException {
+        Instant started = Instant.now();
+        run(FailingSignIn.class);
+        Path trace = Path.of("test-results", "FailingSignIn", "body", "trace-session-1.zip");
+
+        assertEquals(
+                true,
+                Files.exists(trace) && !Files.getLastModifiedTime(trace).toInstant().isBefore(started.minusSeconds(1)),
+                "Failed sign-in did not leave a fresh trace of the session context"
+        );
+    }
+
+    @Test
+    @DisplayName("A session parameter of a class-level method fails with a parameter resolution error")
+    void shouldFailSessionOnClassLevelMethod() {
+        assertEquals(
+                List.of(ParameterResolutionException.class, "A session is supported only on a parameter of the test method"),
+                containerFailure(run(SessionOnBeforeAll.class)),
+                "Session on a class-level method did not fail with the expected error"
+        );
+    }
+
+    @Test
+    @DisplayName("A user session without UserExtension fails with a parameter resolution error that names the extension and closes the context")
+    void shouldFailUserSessionWithoutUserExtension() {
+        EngineExecutionResults results = run(WithoutUserExtension.class);
+
+        assertEquals(
+                List.of(ParameterResolutionException.class, "@User needs UserExtension, which creates the user before the test", "1"),
+                List.of(failure(results).get(0), failure(results).get(1), values(results, "contexts.after").getFirst()),
+                "Missing UserExtension did not fail with the expected error or left the session context open"
+        );
+    }
+
+    @Test
     @DisplayName("UserSession without @User fails with a parameter resolution error")
     void shouldFailUserSessionWithoutUser() {
         assertEquals(
@@ -155,6 +196,14 @@ class SessionExtensionTest {
                 .map(event -> event.getRequiredPayload(TestExecutionResult.class).getThrowable().orElseThrow().getCause().getClass())
                 .findFirst()
                 .orElseThrow();
+    }
+
+    private static List<Object> containerFailure(EngineExecutionResults results) {
+        Throwable failure = results.containerEvents().failed().stream()
+                .map(event -> event.getRequiredPayload(TestExecutionResult.class).getThrowable().orElseThrow())
+                .findFirst()
+                .orElseThrow();
+        return List.of(failure.getClass(), failure.getMessage());
     }
 
     private static List<Object> failure(EngineExecutionResults results) {
@@ -269,6 +318,36 @@ class SessionExtensionTest {
             context.publishReportEntry("username", username);
             AuthUserRepository.deleteUser(username);
             ApiUserRepository.deleteUser(username);
+        }
+    }
+
+    /**
+     * Sample class that asks for a session in a class-level method.
+     */
+    @ProbeTarget
+    @UiTest
+    @ExtendWith({UserExtension.class, SessionExtension.class})
+    static class SessionOnBeforeAll {
+
+        @BeforeAll
+        static void prepare(GuestSession guest) {
+        }
+
+        @Test
+        void body() {
+        }
+    }
+
+    /**
+     * Sample test that asks for a user session but registers no user extension.
+     */
+    @ProbeTarget
+    @UiTest
+    @ExtendWith({ContextsProbe.class, SessionExtension.class})
+    static class WithoutUserExtension {
+
+        @Test
+        void body(@User UserSession session) {
         }
     }
 

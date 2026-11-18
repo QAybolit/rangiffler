@@ -35,46 +35,59 @@ public final class SessionExtension implements ParameterResolver, AfterEachCallb
     }
 
     /**
-     * Opens the context, registers it for closing before anything else, such as reading a timeout setting, can fail, and signs the user in when the parameter asks for one.
+     * Opens a context for the parameter and signs the user in when it is a {@code UserSession}.
      */
     @Override
     public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
-        if (!parameterContext.getDeclaringExecutable().equals(extensionContext.getRequiredTestMethod())) {
-            throw new ParameterResolutionException("A session is supported only on a parameter of the test method");
-        }
-        boolean asked = parameterContext.isAnnotated(User.class);
-        boolean guest = parameterContext.getParameter().getType().equals(GuestSession.class);
-        if (guest && asked) {
-            throw new ParameterResolutionException("@User is not allowed on GuestSession, a guest has no user");
-        }
-        if (!guest && !asked) {
-            throw new ParameterResolutionException("UserSession needs @User, use GuestSession for a session without a user");
-        }
-        BrowserContext context = BrowserExtension.getOrCreateBrowser(extensionContext).newContext(PlaywrightOptions.contextOptions());
-        SessionFixture fixture = SessionFixture.create(context);
-        opened(extensionContext).add(fixture);
-        ContextTimeouts.apply(context);
-        if (guest) {
-            return new GuestSession(fixture.page());
+        validate(parameterContext, extensionContext);
+        Page page = open(extensionContext);
+        if (isGuest(parameterContext)) {
+            return new GuestSession(page);
         }
         TestUser user = UserExtension.fixture(parameterContext, extensionContext).user();
-        signIn(fixture.page(), user);
-        return new UserSession(fixture.page(), user);
+        new SignIn().signIn(page, user.username(), user.password());
+        return new UserSession(page, user);
     }
 
     /**
-     * Closes the contexts opened for the test in reverse order, keeping the first failure and suppressing the rest; it runs before the cleanup of {@code UserExtension}, so a user is not removed while its browser is still open.
+     * Closes the contexts opened for the test in reverse order, after saving the trace of each when the test failed, keeping the first failure and suppressing the rest; it runs before the cleanup of {@code UserExtension}, so a user is not removed while its browser is still open.
      */
     @Override
     public void afterEach(ExtensionContext context) {
         Opened opened = context.getStore(NAMESPACE).remove(context.getUniqueId(), Opened.class);
         if (opened != null) {
-            opened.close();
+            opened.close(context);
         }
     }
 
-    private static void signIn(Page page, TestUser user) {
-        new SignIn().signIn(page, user.username(), user.password());
+    private static void validate(ParameterContext parameterContext, ExtensionContext extensionContext) {
+        if (extensionContext.getTestMethod().filter(parameterContext.getDeclaringExecutable()::equals).isEmpty()) {
+            throw new ParameterResolutionException("A session is supported only on a parameter of the test method");
+        }
+        boolean asked = parameterContext.isAnnotated(User.class);
+        if (isGuest(parameterContext) && asked) {
+            throw new ParameterResolutionException("@User is not allowed on GuestSession, a guest has no user");
+        }
+        if (!isGuest(parameterContext) && !asked) {
+            throw new ParameterResolutionException("UserSession needs @User, use GuestSession for a session without a user");
+        }
+    }
+
+    /**
+     * Opens the context and registers it for closing before anything else, such as reading a timeout setting, can fail.
+     */
+    private static Page open(ExtensionContext extensionContext) {
+        BrowserContext context = BrowserExtension.getOrCreateBrowser(extensionContext).newContext(PlaywrightOptions.contextOptions());
+        SessionFixture fixture = SessionFixture.create(context);
+        ContextTrace trace = new ContextTrace(context);
+        opened(extensionContext).add(fixture, trace);
+        trace.start(extensionContext.getDisplayName());
+        ContextTimeouts.apply(context);
+        return fixture.page();
+    }
+
+    private static boolean isGuest(ParameterContext parameterContext) {
+        return parameterContext.getParameter().getType().equals(GuestSession.class);
     }
 
     private static Opened opened(ExtensionContext context) {
@@ -82,32 +95,43 @@ public final class SessionExtension implements ParameterResolver, AfterEachCallb
     }
 
     /**
-     * The session fixtures opened for one test, in the order of opening.
+     * The session fixtures opened for one test with their traces, in the order of opening.
      */
     private static final class Opened {
 
         private final List<SessionFixture> fixtures = new ArrayList<>();
+        private final List<ContextTrace> traces = new ArrayList<>();
 
-        void add(SessionFixture fixture) {
+        void add(SessionFixture fixture, ContextTrace trace) {
             fixtures.add(fixture);
+            traces.add(trace);
         }
 
-        void close() {
+        void close(ExtensionContext context) {
             RuntimeException failure = null;
-            for (SessionFixture fixture : fixtures.reversed()) {
+            for (int index = fixtures.size() - 1; index >= 0; index--) {
                 try {
-                    fixture.close();
+                    traces.get(index).finish(context, "trace-session-" + (index + 1) + ".zip");
                 } catch (RuntimeException e) {
-                    if (failure == null) {
-                        failure = e;
-                    } else {
-                        failure.addSuppressed(e);
-                    }
+                    failure = keep(failure, e);
+                }
+                try {
+                    fixtures.get(index).close();
+                } catch (RuntimeException e) {
+                    failure = keep(failure, e);
                 }
             }
             if (failure != null) {
                 throw failure;
             }
+        }
+
+        private static RuntimeException keep(RuntimeException first, RuntimeException next) {
+            if (first == null) {
+                return next;
+            }
+            first.addSuppressed(next);
+            return first;
         }
     }
 }

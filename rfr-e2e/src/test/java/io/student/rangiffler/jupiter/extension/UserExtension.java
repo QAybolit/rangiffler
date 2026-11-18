@@ -81,7 +81,7 @@ public final class UserExtension implements BeforeEachCallback, AfterEachCallbac
      */
     @Override
     public TestUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
-        if (!parameterContext.getDeclaringExecutable().equals(extensionContext.getRequiredTestMethod())) {
+        if (extensionContext.getTestMethod().filter(parameterContext.getDeclaringExecutable()::equals).isEmpty()) {
             throw new ParameterResolutionException("@User is supported only on a parameter of the test method");
         }
         return fixture(parameterContext, extensionContext).user();
@@ -95,8 +95,10 @@ public final class UserExtension implements BeforeEachCallback, AfterEachCallbac
                 .limit(parameterContext.getIndex())
                 .filter(parameter -> parameter.isAnnotationPresent(User.class))
                 .count();
-        return UserFixture.class.cast(
-                extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), List.class).get((int) position)
-        );
+        List<?> fixtures = extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), List.class);
+        if (fixtures == null) {
+            throw new ParameterResolutionException("@User needs UserExtension, which creates the user before the test");
+        }
+        return UserFixture.class.cast(fixtures.get((int) position));
     }
 }
