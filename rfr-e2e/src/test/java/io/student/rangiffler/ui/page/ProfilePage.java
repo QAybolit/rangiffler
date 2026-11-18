@@ -6,6 +6,7 @@ import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
 import io.student.rangiffler.ui.component.Header;
+import io.student.rangiffler.ui.component.Notification;
 
 import java.nio.file.Path;
 
@@ -25,7 +26,6 @@ public final class ProfilePage {
     private final Locator locationSelect;
     private final Locator resetButton;
     private final Locator saveButton;
-    private final Locator successMessage;
 
     public ProfilePage(Page page) {
         this.page = page;
@@ -38,7 +38,6 @@ public final class ProfilePage {
         this.locationSelect = page.getByRole(AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Location"));
         this.resetButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Reset"));
         this.saveButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save"));
-        this.successMessage = page.getByText("Your profile is successfully updated");
     }
 
     public Header header() {
@@ -66,7 +65,7 @@ public final class ProfilePage {
     @Step("Click 'Save'")
     public ProfilePage clickSave() {
         saveButton.click();
-        assertThat(successMessage).isVisible();
+        assertThat(notification(Notification.PROFILE_UPDATED)).isVisible();
         return this;
     }
 
@@ -112,9 +111,13 @@ public final class ProfilePage {
         return this;
     }
 
-    @Step("Check profile success message")
-    public ProfilePage shouldHaveSuccessMessage() {
-        assertThat(successMessage).isVisible();
+    @Step("Check that the notification '{notification}' is shown")
+    public ProfilePage shouldHaveNotification(Notification notification) {
+        assertThat(notification(notification)).isVisible();
         return this;
+    }
+
+    private Locator notification(Notification notification) {
+        return page.getByText(notification.text());
     }
 }

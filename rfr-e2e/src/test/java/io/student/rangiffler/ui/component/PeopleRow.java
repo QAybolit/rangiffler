@@ -16,14 +16,28 @@ public final class PeopleRow {
 
     @Step("Click 'Add'")
     public PeopleRow clickAdd() {
-        button("Add").click();
+        button(PeopleButton.ADD).click();
         assertThat(root.getByText("Waiting...")).isVisible();
         return this;
     }
 
+    @Step("Click 'Accept'")
+    public PeopleRow clickAccept() {
+        button(PeopleButton.ACCEPT).click();
+        assertThat(root).hasCount(0);
+        return this;
+    }
+
+    @Step("Click 'Remove'")
+    public PeopleRow clickRemove() {
+        button(PeopleButton.REMOVE).click();
+        assertThat(root).hasCount(0);
+        return this;
+    }
+
     @Step("Check that the row has the buttons {buttons}")
-    public PeopleRow shouldHaveButtons(String... buttons) {
-        for (String button : buttons) {
+    public PeopleRow shouldHaveButtons(PeopleButton... buttons) {
+        for (PeopleButton button : buttons) {
             assertThat(button(button)).isVisible();
         }
         return this;
@@ -35,7 +49,7 @@ public final class PeopleRow {
         return this;
     }
 
-    private Locator button(String name) {
-        return root.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(name).setExact(true));
+    private Locator button(PeopleButton button) {
+        return root.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(button.label()).setExact(true));
     }
 }

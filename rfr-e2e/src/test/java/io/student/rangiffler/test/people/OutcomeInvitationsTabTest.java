@@ -7,6 +7,7 @@ import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.fixture.UserFixture;
 import io.student.rangiffler.jupiter.annotation.UiTest;
 import io.student.rangiffler.jupiter.annotation.User;
+import io.student.rangiffler.ui.component.PeopleButton;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +31,7 @@ class OutcomeInvitationsTabTest extends BasePeopleTest {
         openPeople(user)
                 .openOutcomeInvitations()
                 .shouldHaveInvitationSent(user.outcomeInvitations().getFirst().username())
-                .shouldHaveButtons(user.outcomeInvitations().getFirst().username(), "Cancel");
+                .shouldHaveButtons(user.outcomeInvitations().getFirst().username(), PeopleButton.CANCEL);
     }
 
     @Test

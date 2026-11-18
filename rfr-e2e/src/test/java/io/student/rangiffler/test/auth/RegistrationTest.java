@@ -6,6 +6,7 @@ import io.student.rangiffler.data.db.ApiUserRepository;
 import io.student.rangiffler.data.db.AuthUserRepository;
 import io.student.rangiffler.jupiter.annotation.UiTest;
 import io.student.rangiffler.test.BaseWebTest;
+import io.student.rangiffler.ui.component.Notification;
 import io.student.rangiffler.ui.page.WelcomePage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +33,7 @@ class RegistrationTest extends BaseWebTest {
                 .clickRegister()
                 .fillForm(username, password, password)
                 .submit()
-                .shouldHaveSuccessMessage()
+                .shouldHaveNotification(Notification.REGISTERED)
                 .clickSignIn()
                 .clickLogin()
                 .login(username, password)

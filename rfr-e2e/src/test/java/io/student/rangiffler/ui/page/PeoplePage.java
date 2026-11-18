@@ -5,6 +5,8 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
+import io.student.rangiffler.ui.component.Notification;
+import io.student.rangiffler.ui.component.PeopleButton;
 import io.student.rangiffler.ui.component.PeopleTable;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
@@ -68,6 +70,18 @@ public final class PeoplePage {
         return this;
     }
 
+    @Step("Click 'Accept' for '{username}'")
+    public PeoplePage clickAccept(String username) {
+        table.row(username).clickAccept();
+        return this;
+    }
+
+    @Step("Click 'Remove' for '{username}'")
+    public PeoplePage clickRemove(String username) {
+        table.row(username).clickRemove();
+        return this;
+    }
+
     @Step("Check that the table lists exactly the users {usernames}")
     public PeoplePage shouldHaveUsers(String... usernames) {
         table.shouldHaveUsers(usernames);
@@ -81,7 +95,7 @@ public final class PeoplePage {
     }
 
     @Step("Check that '{username}' has the buttons {buttons}")
-    public PeoplePage shouldHaveButtons(String username, String... buttons) {
+    public PeoplePage shouldHaveButtons(String username, PeopleButton... buttons) {
         table.row(username).shouldHaveButtons(buttons);
         return this;
     }
@@ -89,6 +103,12 @@ public final class PeoplePage {
     @Step("Check that the invitation for '{username}' is waiting")
     public PeoplePage shouldHaveInvitationSent(String username) {
         table.row(username).shouldHaveInvitationSent();
+        return this;
+    }
+
+    @Step("Check that the notification '{notification}' is shown")
+    public PeoplePage shouldHaveNotification(Notification notification) {
+        assertThat(page.getByRole(AriaRole.ALERT).filter(new Locator.FilterOptions().setHasText(notification.text()))).isVisible();
         return this;
     }
 
