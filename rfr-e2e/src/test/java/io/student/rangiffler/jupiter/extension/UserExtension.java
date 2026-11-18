@@ -20,7 +20,7 @@ import java.util.List;
  */
 public final class UserExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
 
-    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(UserExtension.class);
+    static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(UserExtension.class);
 
     /**
      * Creates one user per {@code @User} parameter of the test method, validating every request first and registering each fixture in the store as soon as it exists so a failure on a later one still closes the earlier ones.
@@ -47,12 +47,12 @@ public final class UserExtension implements BeforeEachCallback, AfterEachCallbac
      */
     @Override
     public void afterEach(ExtensionContext context) {
-        List<UserFixture> fixtures = context.getStore(NAMESPACE).remove(context.getUniqueId(), List.class);
+        List<?> fixtures = context.getStore(NAMESPACE).remove(context.getUniqueId(), List.class);
         RuntimeException failure = null;
         if (fixtures != null) {
-            for (UserFixture fixture : fixtures.reversed()) {
+            for (Object fixture : fixtures.reversed()) {
                 try {
-                    fixture.close();
+                    UserFixture.class.cast(fixture).close();
                 } catch (RuntimeException e) {
                     if (failure == null) {
                         failure = e;
@@ -84,12 +84,19 @@ public final class UserExtension implements BeforeEachCallback, AfterEachCallbac
         if (!parameterContext.getDeclaringExecutable().equals(extensionContext.getRequiredTestMethod())) {
             throw new ParameterResolutionException("@User is supported only on a parameter of the test method");
         }
+        return fixture(parameterContext, extensionContext).user();
+    }
+
+    /**
+     * Returns the fixture that was created for the {@code @User} parameter, found by its position among the {@code @User} parameters of the test method.
+     */
+    static UserFixture fixture(ParameterContext parameterContext, ExtensionContext extensionContext) {
         long position = Arrays.stream(extensionContext.getRequiredTestMethod().getParameters())
                 .limit(parameterContext.getIndex())
                 .filter(parameter -> parameter.isAnnotationPresent(User.class))
                 .count();
-        return ((List<UserFixture>) extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), List.class))
-                .get((int) position)
-                .user();
+        return UserFixture.class.cast(
+                extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), List.class).get((int) position)
+        );
     }
 }

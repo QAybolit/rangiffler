@@ -28,7 +28,7 @@ public final class PlaywrightOptions implements OptionsFactory {
                 .setContextOptions(contextOptions());
     }
 
-    private static Browser.NewContextOptions contextOptions() {
+    static Browser.NewContextOptions contextOptions() {
         return new Browser.NewContextOptions()
                 .setLocale(TestConfig.browserLocale().toLanguageTag())
                 .setViewportSize(TestConfig.viewportWidth(), TestConfig.viewportHeight());
