@@ -27,8 +27,8 @@ class FriendshipFlowTest extends BasePeopleTest {
                 .openAllPeople()
                 .search(invited)
                 .clickAdd(invited)
-                .shouldHaveInvitationSent(invited)
                 .shouldHaveNotification(Notification.INVITATION_SENT)
+                .shouldHaveInvitationSent(invited)
                 .openOutcomeInvitations()
                 .shouldHaveUsers(invited);
         PeoplePage receiverPeople = new MyTravelsPage(receiver.page())
@@ -51,7 +51,7 @@ class FriendshipFlowTest extends BasePeopleTest {
                 .shouldNotHaveUsers(invited);
         receiverPeople
                 .openAllPeople()
-                .openFriends()
-                .shouldBeEmpty();
+                .search(inviter)
+                .shouldHaveButtons(inviter, PeopleButton.ADD);
     }
 }

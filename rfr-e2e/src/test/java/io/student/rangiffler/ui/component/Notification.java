@@ -8,7 +8,8 @@ public enum Notification {
     FRIEND_DELETED("Friend deleted"),
     INVITATION_CANCELLED("Invitation cancelled"),
     PROFILE_UPDATED("Your profile is successfully updated"),
-    REGISTERED("Congratulations! You've registered!");
+    REGISTERED("Congratulations! You've registered!"),
+    BAD_CREDENTIALS("Bad credentials");
 
     private final String text;
 

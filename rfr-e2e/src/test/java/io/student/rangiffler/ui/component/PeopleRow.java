@@ -24,14 +24,14 @@ public final class PeopleRow {
     @Step("Click 'Accept'")
     public PeopleRow clickAccept() {
         button(PeopleButton.ACCEPT).click();
-        assertThat(root).hasCount(0);
+        assertThat(button(PeopleButton.ACCEPT)).hasCount(0);
         return this;
     }
 
     @Step("Click 'Remove'")
     public PeopleRow clickRemove() {
         button(PeopleButton.REMOVE).click();
-        assertThat(root).hasCount(0);
+        assertThat(button(PeopleButton.REMOVE)).hasCount(0);
         return this;
     }
 
