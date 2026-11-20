@@ -23,11 +23,16 @@ class RemoveFriendTest extends BasePeopleTest {
         openPeople(user)
                 .openFriends()
                 .clickRemove(friend.username())
-                .shouldHaveNotification(Notification.FRIEND_DELETED);
+                .shouldHaveNotification(Notification.FRIEND_DELETED)
+                .openAllPeople()
+                .search(friend.username())
+                .shouldHaveButtons(friend.username(), PeopleButton.ADD)
+                .shouldNotHaveButtons(friend.username(), PeopleButton.REMOVE);
         openPeople(friendSession.page(), friend)
                 .openAllPeople()
                 .search(user.username())
-                .shouldHaveButtons(user.username(), PeopleButton.ADD);
+                .shouldHaveButtons(user.username(), PeopleButton.ADD)
+                .shouldNotHaveButtons(user.username(), PeopleButton.REMOVE);
     }
 
     @Test
@@ -37,10 +42,15 @@ class RemoveFriendTest extends BasePeopleTest {
         openPeople(friendSession.page(), friend)
                 .openFriends()
                 .clickRemove(user.username())
-                .shouldHaveNotification(Notification.FRIEND_DELETED);
+                .shouldHaveNotification(Notification.FRIEND_DELETED)
+                .openAllPeople()
+                .search(user.username())
+                .shouldHaveButtons(user.username(), PeopleButton.ADD)
+                .shouldNotHaveButtons(user.username(), PeopleButton.REMOVE);
         openPeople(user)
                 .openAllPeople()
                 .search(friend.username())
-                .shouldHaveButtons(friend.username(), PeopleButton.ADD);
+                .shouldHaveButtons(friend.username(), PeopleButton.ADD)
+                .shouldNotHaveButtons(friend.username(), PeopleButton.REMOVE);
     }
 }

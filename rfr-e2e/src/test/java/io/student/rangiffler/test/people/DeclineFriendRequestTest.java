@@ -24,12 +24,15 @@ class DeclineFriendRequestTest extends BasePeopleTest {
                 .openIncomeInvitations()
                 .clickDecline(inviter.username())
                 .shouldHaveNotification(Notification.INVITATION_DECLINED)
+                .shouldNotHaveUsers(inviter.username())
                 .openAllPeople()
                 .search(inviter.username())
-                .shouldHaveButtons(inviter.username(), PeopleButton.ADD);
+                .shouldHaveButtons(inviter.username(), PeopleButton.ADD)
+                .shouldNotHaveButtons(inviter.username(), PeopleButton.ACCEPT, PeopleButton.DECLINE, PeopleButton.REMOVE);
         openPeople(inviterSession.page(), inviter)
                 .openAllPeople()
                 .search(receiver.username())
-                .shouldHaveButtons(receiver.username(), PeopleButton.ADD);
+                .shouldHaveButtons(receiver.username(), PeopleButton.ADD)
+                .shouldNotHaveButtons(receiver.username(), PeopleButton.CANCEL, PeopleButton.REMOVE);
     }
 }

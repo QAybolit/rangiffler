@@ -106,6 +106,12 @@ public final class PeoplePage {
         return this;
     }
 
+    @Step("Check that '{username}' does not have the buttons {buttons}")
+    public PeoplePage shouldNotHaveButtons(String username, PeopleButton... buttons) {
+        table.row(username).shouldNotHaveButtons(buttons);
+        return this;
+    }
+
     @Step("Check that the invitation for '{username}' is waiting")
     public PeoplePage shouldHaveInvitationSent(String username) {
         table.row(username).shouldHaveInvitationSent();

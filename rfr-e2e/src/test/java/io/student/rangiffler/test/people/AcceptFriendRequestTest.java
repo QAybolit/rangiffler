@@ -24,12 +24,15 @@ class AcceptFriendRequestTest extends BasePeopleTest {
                 .openIncomeInvitations()
                 .clickAccept(inviter.username())
                 .shouldHaveNotification(Notification.INVITATION_ACCEPTED)
+                .shouldNotHaveUsers(inviter.username())
                 .openFriends()
                 .shouldHaveUsers(inviter.username())
-                .shouldHaveButtons(inviter.username(), PeopleButton.REMOVE);
+                .shouldHaveButtons(inviter.username(), PeopleButton.REMOVE)
+                .shouldNotHaveButtons(inviter.username(), PeopleButton.ADD, PeopleButton.ACCEPT, PeopleButton.DECLINE);
         openPeople(inviterSession.page(), inviter)
                 .openFriends()
                 .shouldHaveUsers(receiver.username())
-                .shouldHaveButtons(receiver.username(), PeopleButton.REMOVE);
+                .shouldHaveButtons(receiver.username(), PeopleButton.REMOVE)
+                .shouldNotHaveButtons(receiver.username(), PeopleButton.ADD, PeopleButton.ACCEPT, PeopleButton.DECLINE);
     }
 }

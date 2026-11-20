@@ -26,12 +26,15 @@ class SendFriendRequestTest extends BasePeopleTest {
                 .search(invited)
                 .clickAdd(invited)
                 .shouldHaveNotification(Notification.INVITATION_SENT)
-                .shouldHaveInvitationSent(invited);
+                .shouldHaveInvitationSent(invited)
+                .openOutcomeInvitations()
+                .shouldHaveUsers(invited);
         new MyTravelsPage(receiver.page())
                 .sidebar()
                 .openPeople()
                 .openIncomeInvitations()
                 .shouldHaveUsers(sender.username())
-                .shouldHaveButtons(sender.username(), PeopleButton.ACCEPT, PeopleButton.DECLINE);
+                .shouldHaveButtons(sender.username(), PeopleButton.ACCEPT, PeopleButton.DECLINE)
+                .shouldNotHaveButtons(sender.username(), PeopleButton.ADD, PeopleButton.REMOVE);
     }
 }

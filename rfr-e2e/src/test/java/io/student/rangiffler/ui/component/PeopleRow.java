@@ -50,6 +50,14 @@ public final class PeopleRow {
         return this;
     }
 
+    @Step("Check that the row does not have the buttons {buttons}")
+    public PeopleRow shouldNotHaveButtons(PeopleButton... buttons) {
+        for (PeopleButton button : buttons) {
+            assertThat(button(button)).hasCount(0);
+        }
+        return this;
+    }
+
     @Step("Check that the invitation is waiting")
     public PeopleRow shouldHaveInvitationSent() {
         assertThat(root.getByText("Waiting...")).isVisible();
