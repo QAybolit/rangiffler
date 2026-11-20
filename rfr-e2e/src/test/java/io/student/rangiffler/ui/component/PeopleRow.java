@@ -35,6 +35,13 @@ public final class PeopleRow {
         return this;
     }
 
+    @Step("Click 'Cancel'")
+    public PeopleRow clickCancel() {
+        button(PeopleButton.CANCEL).click();
+        assertThat(button(PeopleButton.CANCEL)).hasCount(0);
+        return this;
+    }
+
     @Step("Click 'Remove'")
     public PeopleRow clickRemove() {
         button(PeopleButton.REMOVE).click();

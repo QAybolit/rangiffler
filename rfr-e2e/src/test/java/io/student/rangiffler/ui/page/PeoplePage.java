@@ -82,6 +82,12 @@ public final class PeoplePage {
         return this;
     }
 
+    @Step("Click 'Cancel' for '{username}'")
+    public PeoplePage clickCancel(String username) {
+        table.row(username).clickCancel();
+        return this;
+    }
+
     @Step("Click 'Remove' for '{username}'")
     public PeoplePage clickRemove(String username) {
         table.row(username).clickRemove();
