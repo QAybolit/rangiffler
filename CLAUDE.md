@@ -11,7 +11,7 @@ Rangiffler is a QA.GURU Advanced diploma template (README is in Russian): a phot
 | `rfr-auth` | Spring Authorization Server (OAuth 2.0 / OIDC, Thymeleaf login/register pages) | 9001 | [rfr-auth/CLAUDE.md](rfr-auth/CLAUDE.md) |
 | `rfr-api` | GraphQL backend, OAuth2 Resource Server (JWT, audience `rangiffler-api`) | 8081 | [rfr-api/CLAUDE.md](rfr-api/CLAUDE.md) |
 | `rfr-gql-client` | React 19 + TS + Vite + Apollo frontend (npm project, not part of Gradle) | 3001 | [rfr-gql-client/CLAUDE.md](rfr-gql-client/CLAUDE.md) |
-| `rfr-e2e` | JUnit 6 + Playwright Java + Allure UI tests (auth and profile scenarios, page objects, `@User` test-user extension) | – | [rfr-e2e/CLAUDE.md](rfr-e2e/CLAUDE.md) |
+| `rfr-e2e` | JUnit 6 + Playwright Java + Allure UI tests (auth and profile scenarios, page objects, `@User` test-user extension, a suite extension that checks the database migrations against the backends) | – | [rfr-e2e/CLAUDE.md](rfr-e2e/CLAUDE.md) |
 
 ## Required configuration
 
