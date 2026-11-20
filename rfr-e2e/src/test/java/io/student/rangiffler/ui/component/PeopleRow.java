@@ -28,6 +28,13 @@ public final class PeopleRow {
         return this;
     }
 
+    @Step("Click 'Decline'")
+    public PeopleRow clickDecline() {
+        button(PeopleButton.DECLINE).click();
+        assertThat(button(PeopleButton.DECLINE)).hasCount(0);
+        return this;
+    }
+
     @Step("Click 'Remove'")
     public PeopleRow clickRemove() {
         button(PeopleButton.REMOVE).click();

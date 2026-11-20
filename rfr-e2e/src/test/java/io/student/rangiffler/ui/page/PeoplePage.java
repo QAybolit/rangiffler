@@ -76,6 +76,12 @@ public final class PeoplePage {
         return this;
     }
 
+    @Step("Click 'Decline' for '{username}'")
+    public PeoplePage clickDecline(String username) {
+        table.row(username).clickDecline();
+        return this;
+    }
+
     @Step("Click 'Remove' for '{username}'")
     public PeoplePage clickRemove(String username) {
         table.row(username).clickRemove();
