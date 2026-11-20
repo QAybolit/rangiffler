@@ -7,6 +7,7 @@ import io.student.rangiffler.data.UserSession;
 import io.student.rangiffler.jupiter.annotation.UiTest;
 import io.student.rangiffler.jupiter.annotation.User;
 import io.student.rangiffler.ui.component.Notification;
+import io.student.rangiffler.ui.component.PeopleButton;
 import io.student.rangiffler.ui.page.MyTravelsPage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,10 @@ class CancelFriendRequestTest extends BasePeopleTest {
                 .shouldNotHaveUsers(invited.username());
         openPeople(invited)
                 .openIncomeInvitations()
-                .shouldHaveUsers(alice.user().username());
+                .shouldBeEmpty()
+                .openAllPeople()
+                .search(alice.user().username())
+                .shouldHaveButtons(alice.user().username(), PeopleButton.ADD)
+                .shouldNotHaveButtons(alice.user().username(), PeopleButton.ACCEPT, PeopleButton.DECLINE);
     }
 }
