@@ -40,3 +40,6 @@ docs/
 
 .claude/settings.local.json
 .claude/.*.bak
+
+test-results/
+.allure/

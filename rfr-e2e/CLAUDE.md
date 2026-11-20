@@ -21,13 +21,15 @@ Layering: `jupiter` has no SQL and no locators; `data` has no JUnit; tests have 
 
 ## Running
 
-Every UI test class carries its own `@Tag("ui")` (it is not inherited from `BaseWebTest`), so a new UI test class must add the tag itself, otherwise `e2e` skips it.
+Every UI test class carries its own `@UiTest` (it is not inherited from `BaseWebTest`): the annotation brings the tag `ui` and `@UsePlaywright`, so a new UI test class must add it itself, otherwise `e2e` skips it and the `Page` parameter cannot be resolved.
 ```bash
 ./gradlew :rfr-e2e:installPlaywright          # once: Chromium for Playwright
 ./gradlew :rfr-e2e:e2e                        # UI tests (tag ui) after waiting for the stand
 ./gradlew :rfr-e2e:test                       # tests without the ui tag; no stand needed
 ./gradlew :rfr-e2e:test --tests '<TestClass>' # one test; with --tests the ui tag is not excluded
 ```
+`@UiTest` also brings `TraceExtension`: it records the Playwright trace of every UI test and keeps `trace.zip` only for a failed one, in `rfr-e2e/test-results/<class>/<method>/` and as an Allure attachment; `PlaywrightOptions` does not turn the Playwright trace on itself, so the two never collide. The extension starts the trace in `beforeEach`, before the `@BeforeEach` methods, on the context of Playwright's `BrowserContextExtension` (`getOrCreateBrowserContext`, a class of the `impl` package, so check it when Playwright is updated). Open the file with `./gradlew :rfr-e2e:showTrace -Ptrace=<path to trace.zip from the repository root>`, for example `-Ptrace=rfr-e2e/test-results/FriendsTabTest/shouldListOnlyFriends/trace.zip`.
+
 The stand is awaited by `StandReadinessExtension` before the first class tagged `ui`, so both `e2e` and a UI test started from the IDE wait for it; there is no separate wait task.
 
 `UserExtensionTest` (tag `extension`) needs MySQL but no browser. Its nested sample classes are enabled only when the configuration parameter `rfr.testkit` is `true`, which the test sets itself, so they never run on their own. `@ProbeTarget` also carries the tag `probe`, and both `test` and `e2e` exclude it, with or without `--tests`: sample classes need the tag `ui` for `StandReadinessExtension`, and without this exclusion they would show up as skipped tests in every run. The exclusion does not touch EngineTestKit, which runs the samples itself.
@@ -84,6 +86,9 @@ It is listed above `MigrationCheckExtension` in `META-INF/services`, and the ord
 | `rfr.browser` | `chromium` | `chromium`, `firefox` or `webkit` |
 | `rfr.headless` | `true` | `false` shows the browser window |
 | `rfr.browserLocale` | `en-US` | Browser locale for all UI tests (set in `PlaywrightOptions`) |
+| `rfr.viewportWidth` / `rfr.viewportHeight` | `1920` / `1080` | Browser window size in pixels for all UI tests (set in `PlaywrightOptions`), each side on its own; a value that is not a whole number from 1 to 99999 fails the tests that open a browser |
+| `rfr.actionTimeout` | `5000` | Milliseconds a Playwright action or wait lasts in all UI tests (set in `BaseWebTest`); a value that is not a whole number from 1 to 999999 fails the tests that open a browser |
+| `rfr.navigationTimeout` | `30000` | Milliseconds a Playwright navigation lasts in all UI tests, with the same limits as `rfr.actionTimeout` |
 | `rfr.staticUserTimeout` | `30` | Seconds `StaticUserFixture` waits for a free pooled user before failing |
 | `rfr.standTimeout` | `180` | Seconds `StandReadinessExtension` waits for MySQL, `rfr-auth`, `rfr-api` and the frontend; every request has its own 5 s timeout |
 | `rfr.standCheck` | `true` | `false` turns the wait for the stand off completely |

@@ -55,6 +55,13 @@ allure {
     }
 }
 
+// Allure 3 does not overwrite a report directory that already exists, so the report would show the first run for ever
+tasks.matching { it.name in ['allureReport', 'allureServe'] }.configureEach {
+    doFirst {
+        delete layout.buildDirectory.dir("reports/allure-report/${name}")
+    }
+}
+
 def commit = {
     try {
         providers.exec {
@@ -78,7 +85,7 @@ tasks.withType(Test).configureEach {
     // a class-level failure such as the stand wait is only a bare FAILED line without this
     testLogging {
         events 'failed'
-        exceptionFormat 'full'
+        exceptionFormat = 'full'
         showStackTraces = false
         showCauses = true
     }
@@ -106,12 +113,28 @@ tasks.register('e2e', Test) {
         includeTags 'ui'
         excludeTags 'probe'
     }
+    // results of earlier runs would be merged into one report as retries of the same tests; only e2e feeds the report, so a unit run cannot wipe its results
+    doFirst {
+        delete layout.buildDirectory.dir('allure-results')
+    }
 }
 
 tasks.register('installPlaywright', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.microsoft.playwright.CLI'
     args 'install', 'chromium'
+}
+
+tasks.register('showTrace', JavaExec) {
+    description = 'Opens trace.zip in the Playwright Trace Viewer: -Ptrace=<path to trace.zip from the repository root>'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    doFirst {
+        if (!project.hasProperty('trace')) {
+            throw new GradleException('Pass the file: ./gradlew :rfr-e2e:showTrace -Ptrace=<path to trace.zip>')
+        }
+        args 'show-trace', rootProject.file(project.property('trace')).absolutePath
+    }
 }
 
 tasks.register('installPlaywrightWithDeps', JavaExec) {

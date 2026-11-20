@@ -24,6 +24,10 @@ public final class TestConfig {
     private static final String AUTH_MIGRATIONS = value("authMigrations", "../rfr-auth/src/main/resources/db/migration/rangiffler-auth");
     private static final String API_MIGRATIONS = value("apiMigrations", "../rfr-api/src/main/resources/db/migration/rangiffler-api");
     private static final Locale BROWSER_LOCALE = Locale.forLanguageTag(value("browserLocale", "en-US"));
+    private static final String VIEWPORT_WIDTH = value("viewportWidth", "1920");
+    private static final String VIEWPORT_HEIGHT = value("viewportHeight", "1080");
+    private static final String ACTION_TIMEOUT = value("actionTimeout", "5000");
+    private static final String NAVIGATION_TIMEOUT = value("navigationTimeout", "30000");
 
     private TestConfig() {
     }
@@ -82,6 +86,46 @@ public final class TestConfig {
 
     public static Locale browserLocale() {
         return BROWSER_LOCALE;
+    }
+
+    /**
+     * Returns the width of the browser window in pixels from {@code rfr.viewportWidth}; parsed on demand so a bad value breaks only the tests that open a browser.
+     */
+    public static int viewportWidth() {
+        if (!VIEWPORT_WIDTH.matches("[1-9][0-9]{0,4}")) {
+            throw new IllegalArgumentException("Invalid rfr.viewportWidth \"" + VIEWPORT_WIDTH + "\", expected a whole number of pixels from 1 to 99999");
+        }
+        return Integer.parseInt(VIEWPORT_WIDTH);
+    }
+
+    /**
+     * Returns the height of the browser window in pixels from {@code rfr.viewportHeight}; parsed on demand so a bad value breaks only the tests that open a browser.
+     */
+    public static int viewportHeight() {
+        if (!VIEWPORT_HEIGHT.matches("[1-9][0-9]{0,4}")) {
+            throw new IllegalArgumentException("Invalid rfr.viewportHeight \"" + VIEWPORT_HEIGHT + "\", expected a whole number of pixels from 1 to 99999");
+        }
+        return Integer.parseInt(VIEWPORT_HEIGHT);
+    }
+
+    /**
+     * Returns how long a Playwright action waits in milliseconds from {@code rfr.actionTimeout}; parsed on demand so a bad value breaks only the tests that open a browser.
+     */
+    public static double actionTimeout() {
+        if (!ACTION_TIMEOUT.matches("[1-9][0-9]{0,5}")) {
+            throw new IllegalArgumentException("Invalid rfr.actionTimeout \"" + ACTION_TIMEOUT + "\", expected a whole number of milliseconds from 1 to 999999");
+        }
+        return Double.parseDouble(ACTION_TIMEOUT);
+    }
+
+    /**
+     * Returns how long a Playwright navigation waits in milliseconds from {@code rfr.navigationTimeout}; parsed on demand so a bad value breaks only the tests that open a browser.
+     */
+    public static double navigationTimeout() {
+        if (!NAVIGATION_TIMEOUT.matches("[1-9][0-9]{0,5}")) {
+            throw new IllegalArgumentException("Invalid rfr.navigationTimeout \"" + NAVIGATION_TIMEOUT + "\", expected a whole number of milliseconds from 1 to 999999");
+        }
+        return Double.parseDouble(NAVIGATION_TIMEOUT);
     }
 
     /**
