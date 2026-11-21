@@ -6,6 +6,8 @@ import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
 
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
 public final class WelcomePage {
 
     public static final String URL = TestConfig.frontUrl();
@@ -30,6 +32,12 @@ public final class WelcomePage {
     public LoginPage clickLogin() {
         loginButton.click();
         return new LoginPage(page);
+    }
+
+    @Step("Check that login is available")
+    public WelcomePage shouldHaveLogin() {
+        assertThat(loginButton).isVisible();
+        return this;
     }
 
     @Step("Click 'Register'")
