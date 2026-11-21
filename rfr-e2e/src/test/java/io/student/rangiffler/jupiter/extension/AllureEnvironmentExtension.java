@@ -61,6 +61,7 @@ public final class AllureEnvironmentExtension implements SuiteExtension {
         values.put("dbUrl", TestConfig.dbUrl());
         values.put("browser", TestConfig.browser());
         values.put("headless", String.valueOf(TestConfig.headless()));
+        values.put("viewport", safely(() -> TestConfig.viewportWidth() + "x" + TestConfig.viewportHeight()));
         values.put("commit", TestConfig.commit());
         values.put("authSchemaVersion", safely(authVersion));
         values.put("apiSchemaVersion", safely(apiVersion));

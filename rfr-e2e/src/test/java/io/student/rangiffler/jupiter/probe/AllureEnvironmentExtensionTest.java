@@ -1,5 +1,6 @@
 package io.student.rangiffler.jupiter.probe;
 
+import io.student.rangiffler.config.TestConfig;
 import io.student.rangiffler.jupiter.extension.AllureEnvironmentExtension;
 import io.student.rangiffler.jupiter.extension.SuiteExtension;
 import org.junit.jupiter.api.DisplayName;
@@ -37,9 +38,21 @@ class AllureEnvironmentExtensionTest {
         run(results, Plain.class);
 
         assertEquals(
-                Set.of("frontUrl", "authUrl", "apiUrl", "dbUrl", "browser", "headless", "commit", "authSchemaVersion", "apiSchemaVersion"),
+                Set.of("frontUrl", "authUrl", "apiUrl", "dbUrl", "browser", "headless", "viewport", "commit", "authSchemaVersion", "apiSchemaVersion"),
                 read(results).keySet(),
                 "The file is missing or does not have every key of the environment"
+        );
+    }
+
+    @Test
+    @DisplayName("The file carries the size of the browser window as width and height in pixels")
+    void shouldWriteViewport(@TempDir Path results) throws IOException {
+        run(results, Plain.class);
+
+        assertEquals(
+                TestConfig.viewportWidth() + "x" + TestConfig.viewportHeight(),
+                read(results).getProperty("viewport"),
+                "The size of the browser window is not in the file or differs from the configured one"
         );
     }
 
