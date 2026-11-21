@@ -39,16 +39,16 @@ public final class SessionExtension implements ParameterResolver, AfterTestExecu
     }
 
     /**
-     * Opens a context for the parameter and signs the user in when it is a {@code UserSession}.
+     * Opens a context for the parameter and signs the user in when it is a {@code UserSession}; the user is looked up before the context is opened, so a missing user extension fails without opening anything.
      */
     @Override
     public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
         validate(parameterContext, extensionContext);
-        Page page = open(parameterContext, extensionContext);
         if (isGuest(parameterContext)) {
-            return new GuestSession(page);
+            return new GuestSession(open(parameterContext, extensionContext));
         }
         TestUser user = UserExtension.fixture(parameterContext, extensionContext).user();
+        Page page = open(parameterContext, extensionContext);
         new SignIn().signIn(page, user.username(), user.password());
         return new UserSession(page, user);
     }
