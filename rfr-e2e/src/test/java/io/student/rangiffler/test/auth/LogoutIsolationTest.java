@@ -32,6 +32,6 @@ class LogoutIsolationTest extends BaseWebTest {
                 .sidebar()
                 .openPeople()
                 .openFriends()
-                .shouldHaveUsers(bob.user().username());
+                .shouldHaveUsers(friend.username());
     }
 }
