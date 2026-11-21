@@ -44,6 +44,12 @@ public final class ProfilePage {
         return header;
     }
 
+    @Step("Open profile page {URL}")
+    public ProfilePage open() {
+        page.navigate(URL);
+        return this;
+    }
+
     @Step("Fill profile form: first name '{firstName}', surname '{surname}', location '{country}'")
     public ProfilePage fillForm(String firstName, String surname, String country) {
         firstNameInput.fill(firstName);

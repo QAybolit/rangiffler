@@ -33,6 +33,12 @@ public final class PeoplePage {
         this.table = new PeopleTable(page);
     }
 
+    @Step("Open people page {URL}")
+    public PeoplePage open() {
+        page.navigate(URL);
+        return this;
+    }
+
     @Step("Open 'Friends' tab")
     public PeoplePage openFriends() {
         open(friendsTab);

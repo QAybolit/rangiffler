@@ -35,6 +35,12 @@ public final class MyTravelsPage {
         this.countryList = page.getByRole(AriaRole.TOOLTIP);
     }
 
+    @Step("Open my travels page {URL}")
+    public MyTravelsPage open() {
+        page.navigate(URL);
+        return this;
+    }
+
     public Sidebar sidebar() {
         return sidebar;
     }
