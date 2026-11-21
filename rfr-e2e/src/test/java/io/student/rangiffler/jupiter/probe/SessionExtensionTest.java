@@ -135,6 +135,20 @@ class SessionExtensionTest {
     }
 
     @Test
+    @DisplayName("A passed test leaves no trace of the session context")
+    void shouldNotKeepTraceOfSessionContextWhenTestPasses() throws IOException {
+        Instant started = Instant.now();
+        run(PassingSample.class);
+        Path trace = Path.of("test-results", "PassingSample", "body", "trace-session-0.zip");
+
+        assertEquals(
+                false,
+                Files.exists(trace) && !Files.getLastModifiedTime(trace).toInstant().isBefore(started.minusSeconds(1)),
+                "Passed test left a fresh trace of the session context"
+        );
+    }
+
+    @Test
     @DisplayName("A session parameter of a class-level method fails with a parameter resolution error")
     void shouldFailSessionOnClassLevelMethod() {
         assertEquals(
@@ -225,6 +239,18 @@ class SessionExtensionTest {
 
     private static String existence(String username) {
         return "auth=" + AuthUserRepository.userExists(username) + ",api=" + ApiUserRepository.userExists(username);
+    }
+
+    /**
+     * Sample test that passes with a guest session, so its session trace must not be kept.
+     */
+    @ProbeTarget
+    @UiTest
+    static class PassingSample {
+
+        @Test
+        void body(GuestSession guest) {
+        }
     }
 
     /**
