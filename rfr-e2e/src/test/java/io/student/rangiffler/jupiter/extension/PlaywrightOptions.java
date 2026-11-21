@@ -8,7 +8,7 @@ import io.student.rangiffler.config.TestConfig;
 import java.util.Set;
 
 /**
- * Playwright options of the UI tests, taken from {@code TestConfig}, failing fast on an unknown browser, with the trace left to {@code TraceExtension} and the test id attribute fixed to {@code data-test-id}.
+ * Playwright options of the UI tests, taken from {@code TestConfig}, failing fast on an unknown browser, with the trace left to {@code BrowserTraceExtension} and the test id attribute fixed to {@code data-test-id}.
  */
 public final class PlaywrightOptions implements OptionsFactory {
 

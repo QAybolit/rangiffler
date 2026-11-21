@@ -1,6 +1,5 @@
 package io.student.rangiffler.jupiter.extension;
 
-import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.impl.junit.BrowserExtension;
 import io.student.rangiffler.data.GuestSession;
@@ -10,20 +9,25 @@ import io.student.rangiffler.data.fixture.SessionFixture;
 import io.student.rangiffler.jupiter.annotation.User;
 import io.student.rangiffler.ui.flow.SignIn;
 import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.lang.reflect.Method;
+import java.util.function.Consumer;
 
 /**
- * Opens an additional browser context for every {@code UserSession} and {@code GuestSession} parameter of a test, signs the {@code @User} user in through the UI, and closes the contexts after the test.
+ * Opens an additional browser context for every {@code UserSession} and {@code GuestSession} parameter of a test, records its trace, signs the {@code @User} user in through the UI, and closes the contexts after the test.
  */
-public final class SessionExtension implements ParameterResolver, AfterEachCallback {
+public final class SessionExtension implements ParameterResolver, AfterTestExecutionCallback, AfterEachCallback {
 
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(SessionExtension.class);
+
+    private static final String SESSION = "session-";
+
+    private static final String TRACE = "trace-";
 
     /**
      * Supports the parameters of the types {@code UserSession} and {@code GuestSession}.
@@ -40,7 +44,7 @@ public final class SessionExtension implements ParameterResolver, AfterEachCallb
     @Override
     public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
         validate(parameterContext, extensionContext);
-        Page page = open(extensionContext);
+        Page page = open(parameterContext, extensionContext);
         if (isGuest(parameterContext)) {
             return new GuestSession(page);
         }
@@ -50,14 +54,19 @@ public final class SessionExtension implements ParameterResolver, AfterEachCallb
     }
 
     /**
-     * Closes the contexts opened for the test in reverse order, after saving the trace of each when the test failed, keeping the first failure and suppressing the rest; it runs before the cleanup of {@code UserExtension}, so a user is not removed while its browser is still open.
+     * Stops the traces of the session contexts in reverse order, keeping each only when the test failed; it runs before any {@code afterEach} callback, so the contexts are still open and the Allure test case is still running.
+     */
+    @Override
+    public void afterTestExecution(ExtensionContext context) {
+        release(context, TRACE, ContextTrace.class, trace -> trace.finish(context));
+    }
+
+    /**
+     * Closes the contexts opened for the test in reverse order, keeping the first failure and suppressing the rest; it runs before the cleanup of {@code UserExtension} when it is registered after it, so a user is not removed while its browser is still open.
      */
     @Override
     public void afterEach(ExtensionContext context) {
-        Opened opened = context.getStore(NAMESPACE).remove(context.getUniqueId(), Opened.class);
-        if (opened != null) {
-            opened.close(context);
-        }
+        release(context, SESSION, SessionFixture.class, SessionFixture::close);
     }
 
     private static void validate(ParameterContext parameterContext, ExtensionContext extensionContext) {
@@ -74,15 +83,17 @@ public final class SessionExtension implements ParameterResolver, AfterEachCallb
     }
 
     /**
-     * Opens the context and registers it for closing before anything else, such as reading a timeout setting, can fail.
+     * Opens the context and registers it for closing before anything else can fail, then starts its trace before the sign-in, so a failed sign-in is recorded.
      */
-    private static Page open(ExtensionContext extensionContext) {
-        BrowserContext context = BrowserExtension.getOrCreateBrowser(extensionContext).newContext(PlaywrightOptions.contextOptions());
-        SessionFixture fixture = SessionFixture.create(context);
-        ContextTrace trace = new ContextTrace(context);
-        opened(extensionContext).add(fixture, trace);
-        trace.start(extensionContext.getDisplayName());
-        ContextTimeouts.apply(context);
+    private static Page open(ParameterContext parameterContext, ExtensionContext extensionContext) {
+        int index = parameterContext.getIndex();
+        SessionFixture fixture = SessionFixture.create(BrowserExtension.getOrCreateBrowser(extensionContext).newContext(PlaywrightOptions.contextOptions()));
+        extensionContext.getStore(NAMESPACE).put(SESSION + index, fixture);
+        extensionContext.getStore(NAMESPACE).put(
+                TRACE + index,
+                ContextTrace.started(fixture.page().context(), "trace-session-" + index + ".zip", extensionContext.getDisplayName())
+        );
+        ContextTimeouts.apply(fixture.page().context());
         return fixture.page();
     }
 
@@ -90,48 +101,27 @@ public final class SessionExtension implements ParameterResolver, AfterEachCallb
         return parameterContext.getParameter().getType().equals(GuestSession.class);
     }
 
-    private static Opened opened(ExtensionContext context) {
-        return context.getStore(NAMESPACE).getOrComputeIfAbsent(context.getUniqueId(), key -> new Opened(), Opened.class);
-    }
-
     /**
-     * The session fixtures opened for one test with their traces, in the order of opening.
+     * Takes the resources kept under {@code prefix} and the index of each parameter of the test method, from the last parameter to the first, and applies the action to every one that was opened; the first failure is thrown after all of them, the others are suppressed.
      */
-    private static final class Opened {
-
-        private final List<SessionFixture> fixtures = new ArrayList<>();
-        private final List<ContextTrace> traces = new ArrayList<>();
-
-        void add(SessionFixture fixture, ContextTrace trace) {
-            fixtures.add(fixture);
-            traces.add(trace);
-        }
-
-        void close(ExtensionContext context) {
-            RuntimeException failure = null;
-            for (int index = fixtures.size() - 1; index >= 0; index--) {
+    private static <T> void release(ExtensionContext context, String prefix, Class<T> type, Consumer<T> action) {
+        RuntimeException failure = null;
+        for (int index = context.getTestMethod().map(Method::getParameterCount).orElse(0) - 1; index >= 0; index--) {
+            T resource = context.getStore(NAMESPACE).remove(prefix + index, type);
+            if (resource != null) {
                 try {
-                    traces.get(index).finish(context, "trace-session-" + (index + 1) + ".zip");
+                    action.accept(resource);
                 } catch (RuntimeException e) {
-                    failure = keep(failure, e);
-                }
-                try {
-                    fixtures.get(index).close();
-                } catch (RuntimeException e) {
-                    failure = keep(failure, e);
+                    if (failure == null) {
+                        failure = e;
+                    } else {
+                        failure.addSuppressed(e);
+                    }
                 }
             }
-            if (failure != null) {
-                throw failure;
-            }
         }
-
-        private static RuntimeException keep(RuntimeException first, RuntimeException next) {
-            if (first == null) {
-                return next;
-            }
-            first.addSuppressed(next);
-            return first;
+        if (failure != null) {
+            throw failure;
         }
     }
 }

@@ -21,14 +21,14 @@ Layering: `jupiter` has no SQL and no locators; `data` has no JUnit; tests have 
 
 ## Running
 
-Every UI test class carries its own `@UiTest` (it is not inherited from `BaseWebTest`): the annotation brings the tag `ui` and `@UsePlaywright`, so a new UI test class must add it itself, otherwise `e2e` skips it and the `Page` parameter cannot be resolved.
+Every UI test class carries its own `@UiTest` (it is not inherited from `BaseWebTest`): the annotation brings the tag `ui`, `@UsePlaywright` and the extensions `UserExtension`, `SessionExtension` and `BrowserTraceExtension` (in this order: `afterEach` runs in reverse, so the sessions close before the users are removed; the traces of the sessions are stopped earlier, in `afterTestExecution`), so a new UI test class must add it itself, otherwise `e2e` skips it and the `Page` parameter cannot be resolved.
 ```bash
 ./gradlew :rfr-e2e:installPlaywright          # once: Chromium for Playwright
 ./gradlew :rfr-e2e:e2e                        # UI tests (tag ui) after waiting for the stand
 ./gradlew :rfr-e2e:test                       # tests without the ui tag; no stand needed
 ./gradlew :rfr-e2e:test --tests '<TestClass>' # one test; with --tests the ui tag is not excluded
 ```
-`@UiTest` also brings `TraceExtension`: it records the Playwright trace of every UI test and keeps `trace.zip` only for a failed one, in `rfr-e2e/test-results/<class>/<method>/` and as an Allure attachment; `PlaywrightOptions` does not turn the Playwright trace on itself, so the two never collide. The extension starts the trace in `beforeEach`, before the `@BeforeEach` methods, on the context of Playwright's `BrowserContextExtension` (`getOrCreateBrowserContext`, a class of the `impl` package, so check it when Playwright is updated). Open the file with `./gradlew :rfr-e2e:showTrace -Ptrace=<path to trace.zip from the repository root>`, for example `-Ptrace=rfr-e2e/test-results/FriendsTabTest/shouldListOnlyFriends/trace.zip`.
+`@UiTest` also brings `BrowserTraceExtension`: it records the Playwright trace of every UI test and keeps `trace.zip` only for a failed one (the contexts of `UserSession` and `GuestSession` are traced the same way by `SessionExtension` itself: it starts the trace right after it creates the context, before the sign-in, keeps it in the Store under `trace-<parameter index>`, and stops it in `afterTestExecution`, because the Store is closed after the Allure test case has ended; a failed test keeps `trace-session-<parameter index>.zip` for it), in `rfr-e2e/test-results/<class>/<method>/` and as an Allure attachment; `PlaywrightOptions` does not turn the Playwright trace on itself, so the two never collide. The extension starts the trace in `beforeEach`, before the `@BeforeEach` methods, on the context of Playwright's `BrowserContextExtension` (`getOrCreateBrowserContext`, a class of the `impl` package, so check it when Playwright is updated). Open the file with `./gradlew :rfr-e2e:showTrace -Ptrace=<path to trace.zip from the repository root>`, for example `-Ptrace=rfr-e2e/test-results/FriendsTabTest/shouldListOnlyFriends/trace.zip`.
 
 The stand is awaited by `StandReadinessExtension` before the first class tagged `ui`, so both `e2e` and a UI test started from the IDE wait for it; there is no separate wait task.
 

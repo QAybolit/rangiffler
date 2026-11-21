@@ -18,23 +18,29 @@ import java.nio.file.Path;
 final class ContextTrace {
 
     private final BrowserContext context;
+    private final String file;
 
-    ContextTrace(BrowserContext context) {
+    private ContextTrace(BrowserContext context, String file) {
         this.context = context;
+        this.file = file;
     }
 
-    void start(String title) {
+    /**
+     * Starts the trace of the context and returns it only when it has started, so a trace that is kept can always be stopped.
+     */
+    static ContextTrace started(BrowserContext context, String file, String title) {
         context.tracing().start(new Tracing.StartOptions()
                 .setScreenshots(true)
                 .setSnapshots(true)
                 .setSources(true)
                 .setTitle(title));
+        return new ContextTrace(context, file);
     }
 
     /**
      * Stops the trace and discards it when the test passed; otherwise saves it as {@code file} in the folder of the test and attaches it to the Allure report.
      */
-    void finish(ExtensionContext extensionContext, String file) {
+    void finish(ExtensionContext extensionContext) {
         if (extensionContext.getExecutionException().isEmpty()) {
             context.tracing().stop();
             return;

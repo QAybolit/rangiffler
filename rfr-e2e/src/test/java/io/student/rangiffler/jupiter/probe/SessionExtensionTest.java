@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestReporter;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
@@ -124,7 +125,7 @@ class SessionExtensionTest {
     void shouldKeepTraceOfSessionContextWhenSignInFails() throws IOException {
         Instant started = Instant.now();
         run(FailingSignIn.class);
-        Path trace = Path.of("test-results", "FailingSignIn", "body", "trace-session-1.zip");
+        Path trace = Path.of("test-results", "FailingSignIn", "body", "trace-session-0.zip");
 
         assertEquals(
                 true,
@@ -149,7 +150,7 @@ class SessionExtensionTest {
         EngineExecutionResults results = run(WithoutUserExtension.class);
 
         assertEquals(
-                List.of(ParameterResolutionException.class, "@User needs UserExtension, which creates the user before the test", "1"),
+                List.of(ParameterResolutionException.class, "@User needs UserExtension, which creates the user before the test", "0"),
                 List.of(failure(results).get(0), failure(results).get(1), values(results, "contexts.after").getFirst()),
                 "Missing UserExtension did not fail with the expected error or left the session context open"
         );
@@ -231,7 +232,6 @@ class SessionExtensionTest {
      */
     @ProbeTarget
     @UiTest
-    @ExtendWith({UserExtension.class, SessionExtension.class})
     static class GuestSample {
 
         static final List<Page> OPENED = new CopyOnWriteArrayList<>();
@@ -249,7 +249,6 @@ class SessionExtensionTest {
      */
     @ProbeTarget
     @UiTest
-    @ExtendWith({UserExtension.class, SessionExtension.class})
     static class UserSample {
 
         static final List<Page> OPENED = new CopyOnWriteArrayList<>();
@@ -267,8 +266,9 @@ class SessionExtensionTest {
      * Sample test whose user is removed before the session signs in, so the sign-in fails.
      */
     @ProbeTarget
+    @ExtendWith(ContextsProbe.class)
     @UiTest
-    @ExtendWith({ContextsProbe.class, UserExtension.class, SessionExtension.class, RemoveUser.class})
+    @ExtendWith(RemoveUser.class)
     static class FailingSignIn {
 
         @Test
@@ -280,8 +280,8 @@ class SessionExtensionTest {
      * Sample test with a plain user and two user sessions.
      */
     @ProbeTarget
+    @ExtendWith(ContextsProbe.class)
     @UiTest
-    @ExtendWith({ContextsProbe.class, UserExtension.class, SessionExtension.class})
     static class TwoSessions {
 
         @Test
@@ -308,10 +308,10 @@ class SessionExtensionTest {
     /**
      * Removes the created user from both databases, so that signing in as it fails.
      */
-    static final class RemoveUser implements BeforeEachCallback {
+    static final class RemoveUser implements BeforeTestExecutionCallback {
 
         @Override
-        public void beforeEach(ExtensionContext context) {
+        public void beforeTestExecution(ExtensionContext context) {
             List<?> fixtures = context.getStore(ExtensionContext.Namespace.create(UserExtension.class))
                     .get(context.getUniqueId(), List.class);
             String username = ((UserFixture) fixtures.getFirst()).user().username();
@@ -326,7 +326,6 @@ class SessionExtensionTest {
      */
     @ProbeTarget
     @UiTest
-    @ExtendWith({UserExtension.class, SessionExtension.class})
     static class SessionOnBeforeAll {
 
         @BeforeAll
@@ -342,7 +341,7 @@ class SessionExtensionTest {
      * Sample test that asks for a user session but registers no user extension.
      */
     @ProbeTarget
-    @UiTest
+    @Tag("ui")
     @ExtendWith({ContextsProbe.class, SessionExtension.class})
     static class WithoutUserExtension {
 
@@ -356,7 +355,6 @@ class SessionExtensionTest {
      */
     @ProbeTarget
     @UiTest
-    @ExtendWith({UserExtension.class, SessionExtension.class})
     static class UserSessionWithoutUser {
 
         @Test
@@ -369,7 +367,7 @@ class SessionExtensionTest {
      */
     @ProbeTarget
     @UiTest
-    @ExtendWith({UserExtension.class, SessionExtension.class, UsernameProbe.class})
+    @ExtendWith(UsernameProbe.class)
     static class GuestSessionWithUser {
 
         static final List<String> USERNAMES = new CopyOnWriteArrayList<>();
