@@ -44,7 +44,7 @@ public final class ProfilePage {
         return header;
     }
 
-    @Step("Open profile page {URL}")
+    @Step("Open profile page")
     public ProfilePage open() {
         page.navigate(URL);
         return this;

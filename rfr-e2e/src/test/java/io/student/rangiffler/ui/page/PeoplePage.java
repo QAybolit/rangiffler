@@ -33,7 +33,7 @@ public final class PeoplePage {
         this.table = new PeopleTable(page);
     }
 
-    @Step("Open people page {URL}")
+    @Step("Open people page")
     public PeoplePage open() {
         page.navigate(URL);
         return this;
@@ -41,25 +41,25 @@ public final class PeoplePage {
 
     @Step("Open 'Friends' tab")
     public PeoplePage openFriends() {
-        open(friendsTab);
+        select(friendsTab);
         return this;
     }
 
     @Step("Open 'All People' tab")
     public PeoplePage openAllPeople() {
-        open(allPeopleTab);
+        select(allPeopleTab);
         return this;
     }
 
     @Step("Open 'Income invitations' tab")
     public PeoplePage openIncomeInvitations() {
-        open(incomeInvitationsTab);
+        select(incomeInvitationsTab);
         return this;
     }
 
     @Step("Open 'Outcome invitations' tab")
     public PeoplePage openOutcomeInvitations() {
-        open(outcomeInvitationsTab);
+        select(outcomeInvitationsTab);
         return this;
     }
 
@@ -142,7 +142,7 @@ public final class PeoplePage {
         return this;
     }
 
-    private void open(Locator tab) {
+    private void select(Locator tab) {
         tab.click();
         assertThat(tab).hasAttribute("aria-selected", "true");
     }

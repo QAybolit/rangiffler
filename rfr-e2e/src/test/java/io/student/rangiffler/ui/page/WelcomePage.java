@@ -22,7 +22,7 @@ public final class WelcomePage {
         this.registerLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Register"));
     }
 
-    @Step("Open welcome page {URL}")
+    @Step("Open welcome page")
     public WelcomePage open() {
         page.navigate(URL);
         return this;
@@ -34,8 +34,9 @@ public final class WelcomePage {
         return new LoginPage(page);
     }
 
-    @Step("Check that login is available")
+    @Step("Check that the welcome page is open and login is available")
     public WelcomePage shouldHaveLogin() {
+        assertThat(page).hasURL(URL + "/");
         assertThat(loginButton).isVisible();
         return this;
     }
