@@ -190,19 +190,19 @@ class SessionExtensionTest {
     }
 
     @Test
-    @DisplayName("GuestSession with @User fails with a parameter resolution error, opens no context and the user is removed")
+    @DisplayName("GuestSession with @User fails with a parameter resolution error and creates neither a user nor a context")
     void shouldFailGuestSessionWithUser() {
         EngineExecutionResults results = run(GuestSessionWithUser.class);
 
         assertEquals(
-                List.of(ParameterResolutionException.class, "@User is not allowed on GuestSession, a guest has no user", "1", "auth=false,api=false"),
+                List.of(ParameterResolutionException.class, "@User is not allowed on GuestSession, a guest has no user", "1", "false"),
                 List.of(
                         failure(results).get(0),
                         failure(results).get(1),
                         values(results, "contexts.after").getFirst(),
-                        existence(GuestSessionWithUser.USERNAMES.getFirst())
+                        values(results, "users.created").getFirst()
                 ),
-                "GuestSession with @User did not fail with the expected error, opened a session context or left the user after the failure"
+                "GuestSession with @User did not fail with the expected error, opened a session context or created a user"
         );
     }
 
@@ -415,14 +415,12 @@ class SessionExtensionTest {
     }
 
     /**
-     * Sample test that asks for a guest session with {@code @User}, remembering the user that the user extension created.
+     * Sample test that asks for a guest session with {@code @User}, which the user extension must not answer with a user.
      */
     @ProbeTarget
-    @ExtendWith({ContextsProbe.class, UsernameProbe.class})
+    @ExtendWith({ContextsProbe.class, UsersProbe.class})
     @UiTest
     static class GuestSessionWithUser {
-
-        static final List<String> USERNAMES = new CopyOnWriteArrayList<>();
 
         @Test
         void body(@User GuestSession guest) {
@@ -430,15 +428,16 @@ class SessionExtensionTest {
     }
 
     /**
-     * Remembers the username of the user that was created for the sample test.
+     * Reports whether the user extension has created any user for the sample test.
      */
-    static final class UsernameProbe implements BeforeTestExecutionCallback {
+    static final class UsersProbe implements BeforeTestExecutionCallback {
 
         @Override
         public void beforeTestExecution(ExtensionContext context) {
-            List<?> fixtures = context.getStore(ExtensionContext.Namespace.create(UserExtension.class))
-                    .get(context.getUniqueId(), List.class);
-            GuestSessionWithUser.USERNAMES.add(((UserFixture) fixtures.getFirst()).user().username());
+            context.publishReportEntry(
+                    "users.created",
+                    String.valueOf(context.getStore(ExtensionContext.Namespace.create(UserExtension.class)).get(context.getUniqueId(), List.class) != null)
+            );
         }
     }
 }

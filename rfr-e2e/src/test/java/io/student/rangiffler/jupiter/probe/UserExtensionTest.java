@@ -95,15 +95,14 @@ class UserExtensionTest {
     }
 
     @Test
-    @DisplayName("User exists before the test and is removed when @User sits on a parameter of another type")
-    void shouldRemoveUserWhenParameterTypeIsWrong() {
+    @DisplayName("No user is created when @User sits on a parameter of a type that holds no user")
+    void shouldCreateNoUserWhenParameterTypeIsWrong() {
         EngineExecutionResults results = run(WrongType.class);
-        String username = values(results, "store.before").getFirst();
 
         assertEquals(
-                List.of(existence(true), existence(false)),
-                List.of(values(results, "exists.before").getFirst(), existence(username)),
-                "User was not created for the unresolved parameter or was not removed after the test"
+                List.of("absent", "absent"),
+                List.of(values(results, "store.before").getFirst(), values(results, "exists.before").getFirst()),
+                "A user was created for a parameter whose type holds no user"
         );
     }
 

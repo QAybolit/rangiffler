@@ -3,6 +3,7 @@ package io.student.rangiffler.jupiter.extension;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.fixture.UserFixture;
 import io.student.rangiffler.data.UserRequest;
+import io.student.rangiffler.data.UserSession;
 import io.student.rangiffler.jupiter.annotation.User;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,13 +25,13 @@ public final class UserExtension implements BeforeEachCallback, AfterEachCallbac
     static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(UserExtension.class);
 
     /**
-     * Creates one user per {@code @User} parameter of the test method, validating every request first and registering each fixture in the store as soon as it exists so a failure on a later one still closes the earlier ones.
+     * Creates one user per {@code @User} parameter of the test method that holds a user ({@code TestUser} or {@code UserSession}), validating every request first and registering each fixture in the store as soon as it exists so a failure on a later one still closes the earlier ones.
      */
     @Override
     public void beforeEach(ExtensionContext context) {
         List<UserRequest> requested = context.getTestMethod().stream()
                 .flatMap(method -> Arrays.stream(method.getParameters()))
-                .filter(parameter -> parameter.isAnnotationPresent(User.class))
+                .filter(UserExtension::asked)
                 .map(parameter -> parameter.getAnnotation(User.class))
                 .map(user -> new UserRequest(user.friends(), user.incomeInvitations(), user.outcomeInvitations()))
                 .toList();
@@ -93,12 +95,20 @@ public final class UserExtension implements BeforeEachCallback, AfterEachCallbac
     static UserFixture fixture(ParameterContext parameterContext, ExtensionContext extensionContext) {
         long position = Arrays.stream(extensionContext.getRequiredTestMethod().getParameters())
                 .limit(parameterContext.getIndex())
-                .filter(parameter -> parameter.isAnnotationPresent(User.class))
+                .filter(UserExtension::asked)
                 .count();
         List<?> fixtures = extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), List.class);
         if (fixtures == null) {
             throw new ParameterResolutionException("@User needs UserExtension, which creates the user before the test");
         }
         return UserFixture.class.cast(fixtures.get((int) position));
+    }
+
+    /**
+     * Tells whether the parameter asks for a user: it carries {@code @User} and has a type that holds a user, so an annotation on any other type, such as {@code GuestSession}, creates nothing and is rejected by the resolver of that type.
+     */
+    private static boolean asked(Parameter parameter) {
+        return parameter.isAnnotationPresent(User.class)
+                && (parameter.getType().equals(TestUser.class) || parameter.getType().equals(UserSession.class));
     }
 }
