@@ -14,7 +14,7 @@ E2E-тесты Rangiffler: JUnit 6.1.3, Playwright Java 1.63 (@UsePlaywright), A
 
 Стенд: MySQL :3306, rfr-auth :9001, rfr-api :8081, фронт :3001 (см. корневой README).
 
-Тесты, которым нужен браузер и стенд, помечены @Tag("ui") и запускаются задачей e2e. Задача test исключает тег ui и обходится без стенда. Обе задачи запускают тесты при каждом вызове, --rerun-tasks не нужен. Стенд ждёт StandReadinessExtension перед первым классом с тегом ui, поэтому его ждут и e2e, и UI-тест, запущенный из IDE; отдельной задачи ожидания нет.
+Тесты, которым нужен браузер и стенд, помечены аннотацией @UiTest (она несёт тег ui и @UsePlaywright) и запускаются задачей e2e. Задача test исключает тег ui и обходится без стенда. Обе задачи запускают тесты при каждом вызове, --rerun-tasks не нужен. Стенд ждёт StandReadinessExtension перед первым классом с тегом ui, поэтому его ждут и e2e, и UI-тест, запущенный из IDE; отдельной задачи ожидания нет.
 
 ## Конфигурация
 
@@ -29,6 +29,9 @@ TestConfig читает -Drfr.<ключ> → RFR_<КЛЮЧ> → значение
 | rfr.dbUser / rfr.dbPassword | root / secret |
 | rfr.browser / rfr.headless | chromium / true |
 | rfr.browserLocale | en-US |
+| rfr.viewportWidth / rfr.viewportHeight | 1920 / 1080 (размер окна браузера в пикселях, каждая сторона задаётся отдельно) |
+| rfr.actionTimeout | 5000 (миллисекунд ожидания действий Playwright) |
+| rfr.navigationTimeout | 30000 (миллисекунд ожидания навигации Playwright) |
 | rfr.staticUserTimeout | 30 (секунд ожидания свободного пользователя из пула) |
 | rfr.standTimeout | 180 (секунд ожидания стенда; каждый запрос ограничен 5 секундами) |
 | rfr.standCheck | true (false выключает ожидание стенда совсем) |
@@ -85,8 +88,8 @@ MigrationCheckExtension перед всеми тестами сравнивае�
 | Пакет | Что лежит |
 |---|---|
 | config | TestConfig — единственная точка чтения настроек |
-| jupiter | всё про JUnit: annotation (@User с friends, incomeInvitations, outcomeInvitations; @StaticUser), extension (UserExtension создаёт фикстуру в beforeEach и закрывает в afterEach; UsersQueueExtension выдаёт пользователя из пула для @StaticUser и возвращает его после теста; SuiteExtension с SuiteRun и MigrationCheckExtension работают на весь прогон; DemoExtension с DemoValue и аннотация Demo нужны демонстрационным тестам), probe (UserExtensionTest, UsersQueueExtensionTest и SuiteExtensionTest проверяют расширения через EngineTestKit на классах-мишенях, которые выполняются только при параметре rfr.testkit=true) |
-| data | тестовые данные и их владельцы: TestUser, UserFixture с реализацией BaseUserFixture, декоратором UserWithRelationsFixture и перечислением Relation и StaticUserFixture (пул статических пользователей) (общую работу с партнёрами делает Partners); UserRequest получает от UserExtension счётчики из @User и собирает цепочку фикстур методом fixture(); db — Databases, Jdbc, SchemaMigrations (сравнение миграций БД с файлами бэкенда), репозитории ApiUserRepository и AuthUserRepository (SQL лежит в resources/sql), Friendship и FriendshipStatus |
+| jupiter | всё про JUnit: annotation (@User с friends, incomeInvitations, outcomeInvitations; @StaticUser; @UiTest несёт тег ui и @UsePlaywright(PlaywrightOptions.class)), extension (UserExtension создаёт фикстуру в beforeEach и закрывает в afterEach; UsersQueueExtension выдаёт пользователя из пула для @StaticUser и возвращает его после теста; PlaywrightOptions задаёт @UsePlaywright браузер, локаль, размер окна и атрибут тестовых идентификаторов data-test-id; SuiteExtension с SuiteRun и MigrationCheckExtension работают на весь прогон; DemoExtension с DemoValue и аннотация Demo нужны демонстрационным тестам), probe (UserExtensionTest, UsersQueueExtensionTest и SuiteExtensionTest проверяют расширения через EngineTestKit на классах-мишенях, которые выполняются только при параметре rfr.testkit=true) |
+| data | тестовые данные и их владельцы: TestUser, перечисление Relation; UserRequest получает от UserExtension счётчики из @User и собирает цепочку фикстур методом fixture(); fixture — интерфейс UserFixture и его реализации: BaseUserFixture, декоратор UserWithRelationsFixture (общую работу с партнёрами делает Partners) и StaticUserFixture (пул статических пользователей); db — Databases, Jdbc, SchemaMigrations (сравнение миграций БД с файлами бэкенда), репозитории ApiUserRepository и AuthUserRepository (SQL лежит в resources/sql), Friendship и FriendshipStatus |
 | jupiter/allure | EnvironmentFile — environment.properties каталога результатов Allure |
 | jupiter/stand | ожидание стенда без JUnit: StandService с реализациями TcpService и HttpService, StandReadiness; проверяют StandReadinessTest, TcpServiceTest и HttpServiceTest на подставных сервисах |
 | utils | статические утилиты без состояния: RandomDataUtils — случайные username/password; сюда же будущие генераторы (описания фото и т.п.) |

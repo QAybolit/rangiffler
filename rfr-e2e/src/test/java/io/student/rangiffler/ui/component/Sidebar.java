@@ -16,14 +16,9 @@ public final class Sidebar {
         this.peopleLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("People"));
     }
 
-    @Step("Open people from sidebar and wait for GetFriends query")
+    @Step("Open people from sidebar")
     public PeoplePage openPeople() {
-        page.waitForResponse(
-                response -> response.url().endsWith("/graphql")
-                        && response.request().postData() != null
-                        && response.request().postData().contains("GetFriends"),
-                peopleLink::click
-        );
+        peopleLink.click();
         return new PeoplePage(page);
     }
 }

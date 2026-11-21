@@ -5,6 +5,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 import io.student.rangiffler.ui.page.ProfilePage;
+import io.student.rangiffler.ui.page.WelcomePage;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
@@ -24,6 +25,12 @@ public final class Header {
     public ProfilePage openProfile() {
         profileLink.click();
         return new ProfilePage(page);
+    }
+
+    @Step("Click 'Logout'")
+    public WelcomePage clickLogout() {
+        logoutButton.click();
+        return new WelcomePage(page);
     }
 
     @Step("Check that header is visible")

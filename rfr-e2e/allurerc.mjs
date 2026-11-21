@@ -20,6 +20,8 @@ const variables = existsSync(file)
 
 export default {
     name: "Rangiffler E2E",
+    historyPath: resolve(here, ".allure/history.jsonl"),
+    historyLimit: 10,
     variables,
     environments: {
         local: {

@@ -1,0 +1,443 @@
+package io.student.rangiffler.jupiter.probe;
+
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.impl.junit.BrowserExtension;
+import com.microsoft.playwright.junit.UsePlaywright;
+import io.student.rangiffler.data.GuestSession;
+import io.student.rangiffler.data.TestUser;
+import io.student.rangiffler.data.UserSession;
+import io.student.rangiffler.data.db.ApiUserRepository;
+import io.student.rangiffler.data.db.AuthUserRepository;
+import io.student.rangiffler.data.fixture.UserFixture;
+import io.student.rangiffler.jupiter.annotation.UiTest;
+import io.student.rangiffler.jupiter.annotation.User;
+import io.student.rangiffler.jupiter.extension.PlaywrightOptions;
+import io.student.rangiffler.jupiter.extension.SessionExtension;
+import io.student.rangiffler.jupiter.extension.UserExtension;
+import io.student.rangiffler.ui.page.MyTravelsPage;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestReporter;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.opentest4j.AssertionFailedError;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.reporting.ReportEntry;
+import org.junit.platform.testkit.engine.EngineExecutionResults;
+import org.junit.platform.testkit.engine.EngineTestKit;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
+
+/**
+ * Runs sample tests through the JUnit engine, each in a thread of its own because Playwright keeps its instance in a thread local and closes it with the engine run, to check when {@link SessionExtension} opens, signs in and closes the additional browser contexts.
+ */
+@DisplayName("SessionExtension opens, signs in and closes additional browser contexts")
+@Tag("ui")
+@UsePlaywright(PlaywrightOptions.class)
+class SessionExtensionTest {
+
+    private static final String GONE = "auth=false,api=false";
+
+    @Test
+    @DisplayName("A guest session is a separate context with nobody signed in and is closed after the test")
+    void shouldOpenSeparateGuestContextAndCloseIt() {
+        GuestSample.OPENED.clear();
+        EngineExecutionResults results = run(GuestSample.class);
+
+        assertEquals(
+                List.of("true", "about:blank", "true"),
+                List.of(values(results, "separate").getFirst(), values(results, "url").getFirst(), String.valueOf(GuestSample.OPENED.getFirst().isClosed())),
+                "Guest session shared the context of the test, was not blank or was left open after the test"
+        );
+    }
+
+    @Test
+    @DisplayName("A user session is signed in as the @User user in a separate context, and both are cleaned up after the test")
+    void shouldSignUserInAndCleanUp() {
+        UserSample.OPENED.clear();
+        EngineExecutionResults results = run(UserSample.class);
+        String username = values(results, "username").getFirst();
+
+        assertEquals(
+                List.of(MyTravelsPage.URL, "about:blank", "auth=false,api=false", "true"),
+                List.of(
+                        values(results, "url").getFirst(),
+                        values(results, "main").getFirst(),
+                        existence(username),
+                        String.valueOf(UserSample.OPENED.getFirst().isClosed())
+                ),
+                "User session was not signed in on its own page, touched the main page or left the context or the user after the test"
+        );
+    }
+
+    @Test
+    @DisplayName("A failed sign-in fails the test and still closes the opened context and removes the user")
+    void shouldCloseContextWhenSignInFails() {
+        EngineExecutionResults results = run(FailingSignIn.class);
+        String username = values(results, "username").getFirst();
+
+        assertEquals(
+                List.of(AssertionFailedError.class, "1", GONE),
+                List.of(cause(results), values(results, "contexts.after").getFirst(), existence(username)),
+                "Failed sign-in did not fail with an assertion, left the session context open or left the user"
+        );
+    }
+
+    @Test
+    @DisplayName("Every @User parameter of a test gets its own user, each session is signed in as its own user, and all of them are cleaned up")
+    void shouldGiveEachUserParameterItsOwnUserAndSession() {
+        EngineExecutionResults results = run(TwoSessions.class);
+        List<String> usernames = values(results, "username");
+
+        assertEquals(
+                List.of(3, List.of(MyTravelsPage.URL, MyTravelsPage.URL), List.of("1"), List.of(GONE, GONE, GONE)),
+                List.of(
+                        (int) usernames.stream().distinct().count(),
+                        values(results, "url"),
+                        values(results, "contexts.after"),
+                        usernames.stream().map(username -> existence(username)).toList()
+                ),
+                "Parameters did not get three distinct users, were not signed in or left a context or a user after the test"
+        );
+    }
+
+    @Test
+    @DisplayName("A failed sign-in leaves the trace of the session context in the folder of the test")
+    void shouldKeepTraceOfSessionContextWhenSignInFails() throws IOException {
+        Instant started = Instant.now();
+        EngineExecutionResults results = run(FailingSignIn.class);
+
+        assertEquals(
+                List.of(1L, true),
+                List.of(results.testEvents().failed().count(), fresh(Path.of("test-results", "FailingSignIn", "body", "trace-session-0.zip"), started)),
+                "Failed sign-in did not fail exactly one test or did not leave a fresh trace of the session context"
+        );
+    }
+
+    @Test
+    @DisplayName("A passed test leaves no trace of the session context")
+    void shouldNotKeepTraceOfSessionContextWhenTestPasses() throws IOException {
+        Instant started = Instant.now();
+        EngineExecutionResults results = run(PassingSample.class);
+
+        assertEquals(
+                List.of(1L, 0L, false),
+                List.of(
+                        results.testEvents().succeeded().count(),
+                        results.testEvents().failed().count(),
+                        fresh(Path.of("test-results", "PassingSample", "body", "trace-session-0.zip"), started)
+                ),
+                "Passed sample did not pass exactly once or left a fresh trace of the session context"
+        );
+    }
+
+    @Test
+    @DisplayName("A session parameter of a class-level method fails with a parameter resolution error")
+    void shouldFailSessionOnClassLevelMethod() {
+        assertEquals(
+                List.of(ParameterResolutionException.class, "A session is supported only on a parameter of the test method"),
+                containerFailure(run(SessionOnBeforeAll.class)),
+                "Session on a class-level method did not fail with the expected error"
+        );
+    }
+
+    @Test
+    @DisplayName("A user session without UserExtension fails with a parameter resolution error that names the extension and opens no context")
+    void shouldFailUserSessionWithoutUserExtension() throws IOException {
+        Instant started = Instant.now();
+        EngineExecutionResults results = run(WithoutUserExtension.class);
+
+        assertEquals(
+                List.of(ParameterResolutionException.class, "@User needs UserExtension, which creates the user before the test", "0", false),
+                List.of(
+                        failure(results).get(0),
+                        failure(results).get(1),
+                        values(results, "contexts.after").getFirst(),
+                        fresh(Path.of("test-results", "WithoutUserExtension", "body", "trace-session-0.zip"), started)
+                ),
+                "Missing UserExtension did not fail with the expected error or opened a session context"
+        );
+    }
+
+    @Test
+    @DisplayName("UserSession without @User fails with a parameter resolution error and opens no context")
+    void shouldFailUserSessionWithoutUser() {
+        EngineExecutionResults results = run(UserSessionWithoutUser.class);
+
+        assertEquals(
+                List.of(ParameterResolutionException.class, "UserSession needs @User, use GuestSession for a session without a user", "1"),
+                List.of(failure(results).get(0), failure(results).get(1), values(results, "contexts.after").getFirst()),
+                "UserSession without @User did not fail with the expected error or opened a session context"
+        );
+    }
+
+    @Test
+    @DisplayName("GuestSession with @User fails with a parameter resolution error and creates neither a user nor a context")
+    void shouldFailGuestSessionWithUser() {
+        EngineExecutionResults results = run(GuestSessionWithUser.class);
+
+        assertEquals(
+                List.of(ParameterResolutionException.class, "@User is not allowed on GuestSession, a guest has no user", "1", "false"),
+                List.of(
+                        failure(results).get(0),
+                        failure(results).get(1),
+                        values(results, "contexts.after").getFirst(),
+                        values(results, "users.created").getFirst()
+                ),
+                "GuestSession with @User did not fail with the expected error, opened a session context or created a user"
+        );
+    }
+
+    private static EngineExecutionResults run(Class<?> sample) {
+        ExecutorService thread = Executors.newSingleThreadExecutor();
+        try {
+            return thread.submit(() -> EngineTestKit.engine("junit-jupiter")
+                    .selectors(selectClass(sample))
+                    .configurationParameter("rfr.testkit", "true")
+                    .execute()).get(120, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new IllegalStateException("Cannot run the sample " + sample.getSimpleName(), e);
+        } finally {
+            thread.shutdownNow();
+        }
+    }
+
+    private static Class<?> cause(EngineExecutionResults results) {
+        return failed(results).getCause().getClass();
+    }
+
+    private static List<Object> containerFailure(EngineExecutionResults results) {
+        Throwable failure = results.containerEvents().failed().stream()
+                .map(event -> event.getRequiredPayload(TestExecutionResult.class).getThrowable().orElseThrow())
+                .findFirst()
+                .orElseThrow();
+        return List.of(failure.getClass(), failure.getMessage());
+    }
+
+    private static List<Object> failure(EngineExecutionResults results) {
+        Throwable failure = failed(results);
+        return List.of(failure.getClass(), failure.getMessage());
+    }
+
+    /**
+     * Returns the failure of the only failed test, so a probe cannot pass on a sample that did not run or that failed more than once.
+     */
+    private static Throwable failed(EngineExecutionResults results) {
+        List<Throwable> failures = results.testEvents().failed().stream()
+                .map(event -> event.getRequiredPayload(TestExecutionResult.class).getThrowable().orElseThrow())
+                .toList();
+        if (failures.size() != 1) {
+            throw new IllegalStateException("The sample must fail exactly one test but failed " + failures.size());
+        }
+        return failures.getFirst();
+    }
+
+    private static boolean fresh(Path trace, Instant started) throws IOException {
+        return Files.exists(trace) && !Files.getLastModifiedTime(trace).toInstant().isBefore(started.minusSeconds(1));
+    }
+
+    private static List<String> values(EngineExecutionResults results, String key) {
+        return results.allEvents().reportingEntryPublished().stream()
+                .map(event -> event.getRequiredPayload(ReportEntry.class).getKeyValuePairs())
+                .filter(pairs -> pairs.containsKey(key))
+                .map(pairs -> pairs.get(key))
+                .toList();
+    }
+
+    private static String existence(String username) {
+        return "auth=" + AuthUserRepository.userExists(username) + ",api=" + ApiUserRepository.userExists(username);
+    }
+
+    /**
+     * Sample test that passes with a guest session, so its session trace must not be kept.
+     */
+    @ProbeTarget
+    @UiTest
+    static class PassingSample {
+
+        @Test
+        void body(GuestSession guest) {
+        }
+    }
+
+    /**
+     * Sample test that asks for a guest session next to the page of the test.
+     */
+    @ProbeTarget
+    @UiTest
+    static class GuestSample {
+
+        static final List<Page> OPENED = new CopyOnWriteArrayList<>();
+
+        @Test
+        void body(Page page, GuestSession guest, TestReporter reporter) {
+            OPENED.add(guest.page());
+            reporter.publishEntry("separate", String.valueOf(guest.page().context() != page.context()));
+            reporter.publishEntry("url", guest.page().url());
+        }
+    }
+
+    /**
+     * Sample test that asks for a user session next to the page of the test.
+     */
+    @ProbeTarget
+    @UiTest
+    static class UserSample {
+
+        static final List<Page> OPENED = new CopyOnWriteArrayList<>();
+
+        @Test
+        void body(Page page, @User UserSession session, TestReporter reporter) {
+            OPENED.add(session.page());
+            reporter.publishEntry("username", session.user().username());
+            reporter.publishEntry("url", session.page().url());
+            reporter.publishEntry("main", page.url());
+        }
+    }
+
+    /**
+     * Sample test whose user is removed before the session signs in, so the sign-in fails.
+     */
+    @ProbeTarget
+    @ExtendWith(ContextsProbe.class)
+    @UiTest
+    @ExtendWith(RemoveUser.class)
+    static class FailingSignIn {
+
+        @Test
+        void body(@User UserSession session) {
+        }
+    }
+
+    /**
+     * Sample test with a plain user and two user sessions.
+     */
+    @ProbeTarget
+    @ExtendWith(ContextsProbe.class)
+    @UiTest
+    static class TwoSessions {
+
+        @Test
+        void body(@User TestUser plain, @User UserSession first, @User UserSession second, TestReporter reporter) {
+            reporter.publishEntry("username", plain.username());
+            reporter.publishEntry("username", first.user().username());
+            reporter.publishEntry("username", second.user().username());
+            reporter.publishEntry("url", first.page().url());
+            reporter.publishEntry("url", second.page().url());
+        }
+    }
+
+    /**
+     * Reports how many contexts the browser holds after the session extension has closed its own; only the context of the test is left when nothing leaked.
+     */
+    static final class ContextsProbe implements AfterEachCallback {
+
+        @Override
+        public void afterEach(ExtensionContext context) {
+            context.publishReportEntry("contexts.after", String.valueOf(BrowserExtension.getOrCreateBrowser(context).contexts().size()));
+        }
+    }
+
+    /**
+     * Removes the created user from both databases, so that signing in as it fails.
+     */
+    static final class RemoveUser implements BeforeTestExecutionCallback {
+
+        @Override
+        public void beforeTestExecution(ExtensionContext context) {
+            List<?> fixtures = context.getStore(ExtensionContext.Namespace.create(UserExtension.class))
+                    .get(context.getUniqueId(), List.class);
+            String username = ((UserFixture) fixtures.getFirst()).user().username();
+            context.publishReportEntry("username", username);
+            AuthUserRepository.deleteUser(username);
+            ApiUserRepository.deleteUser(username);
+        }
+    }
+
+    /**
+     * Sample class that asks for a session in a class-level method.
+     */
+    @ProbeTarget
+    @UiTest
+    static class SessionOnBeforeAll {
+
+        @BeforeAll
+        static void prepare(GuestSession guest) {
+        }
+
+        @Test
+        void body() {
+        }
+    }
+
+    /**
+     * Sample test that asks for a user session but registers no user extension.
+     */
+    @ProbeTarget
+    @Tag("ui")
+    @ExtendWith({ContextsProbe.class, SessionExtension.class})
+    static class WithoutUserExtension {
+
+        @Test
+        void body(@User UserSession session) {
+        }
+    }
+
+    /**
+     * Sample test that asks for a user session without {@code @User}.
+     */
+    @ProbeTarget
+    @ExtendWith(ContextsProbe.class)
+    @UiTest
+    static class UserSessionWithoutUser {
+
+        @Test
+        void body(UserSession session) {
+        }
+    }
+
+    /**
+     * Sample test that asks for a guest session with {@code @User}, which the user extension must not answer with a user.
+     */
+    @ProbeTarget
+    @ExtendWith({ContextsProbe.class, UsersProbe.class})
+    @UiTest
+    static class GuestSessionWithUser {
+
+        @Test
+        void body(@User GuestSession guest) {
+        }
+    }
+
+    /**
+     * Reports whether the user extension has created any user for the sample test.
+     */
+    static final class UsersProbe implements BeforeTestExecutionCallback {
+
+        @Override
+        public void beforeTestExecution(ExtensionContext context) {
+            context.publishReportEntry(
+                    "users.created",
+                    String.valueOf(context.getStore(ExtensionContext.Namespace.create(UserExtension.class)).get(context.getUniqueId(), List.class) != null)
+            );
+        }
+    }
+}

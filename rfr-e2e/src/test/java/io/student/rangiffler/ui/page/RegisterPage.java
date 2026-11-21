@@ -5,6 +5,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
+import io.student.rangiffler.ui.component.Notification;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
@@ -17,7 +18,6 @@ public final class RegisterPage {
     private final Locator passwordInput;
     private final Locator confirmPasswordInput;
     private final Locator signUpButton;
-    private final Locator successMessage;
     private final Locator signInLink;
 
     public RegisterPage(Page page) {
@@ -26,7 +26,6 @@ public final class RegisterPage {
         this.passwordInput = page.getByPlaceholder("Type your password");
         this.confirmPasswordInput = page.getByPlaceholder("Repeat your password");
         this.signUpButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign up"));
-        this.successMessage = page.getByText("Congratulations! You've registered!");
         this.signInLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Sign in"));
     }
 
@@ -50,9 +49,9 @@ public final class RegisterPage {
         return new WelcomePage(page);
     }
 
-    @Step("Check registration success message")
-    public RegisterPage shouldHaveSuccessMessage() {
-        assertThat(successMessage).isVisible();
+    @Step("Check that the notification '{notification}' is shown")
+    public RegisterPage shouldHaveNotification(Notification notification) {
+        assertThat(page.getByText(notification.text())).isVisible();
         return this;
     }
 }

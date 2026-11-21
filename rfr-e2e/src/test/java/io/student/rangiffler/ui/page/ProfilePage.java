@@ -6,6 +6,7 @@ import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
 import io.student.rangiffler.ui.component.Header;
+import io.student.rangiffler.ui.component.Notification;
 
 import java.nio.file.Path;
 
@@ -25,7 +26,6 @@ public final class ProfilePage {
     private final Locator locationSelect;
     private final Locator resetButton;
     private final Locator saveButton;
-    private final Locator successMessage;
 
     public ProfilePage(Page page) {
         this.page = page;
@@ -38,11 +38,16 @@ public final class ProfilePage {
         this.locationSelect = page.getByRole(AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Location"));
         this.resetButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Reset"));
         this.saveButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save"));
-        this.successMessage = page.getByText("Your profile is successfully updated");
     }
 
     public Header header() {
         return header;
+    }
+
+    @Step("Open profile page")
+    public ProfilePage open() {
+        page.navigate(URL);
+        return this;
     }
 
     @Step("Fill profile form: first name '{firstName}', surname '{surname}', location '{country}'")
@@ -63,14 +68,10 @@ public final class ProfilePage {
         return this;
     }
 
-    @Step("Click 'Save' and wait for UpdateUser mutation")
+    @Step("Click 'Save'")
     public ProfilePage clickSave() {
-        page.waitForResponse(
-                response -> response.url().endsWith("/graphql")
-                        && response.request().postData() != null
-                        && response.request().postData().contains("UpdateUser"),
-                saveButton::click
-        );
+        saveButton.click();
+        assertThat(notification(Notification.PROFILE_UPDATED)).isVisible();
         return this;
     }
 
@@ -116,9 +117,13 @@ public final class ProfilePage {
         return this;
     }
 
-    @Step("Check profile success message")
-    public ProfilePage shouldHaveSuccessMessage() {
-        assertThat(successMessage).isVisible();
+    @Step("Check that the notification '{notification}' is shown")
+    public ProfilePage shouldHaveNotification(Notification notification) {
+        assertThat(notification(notification)).isVisible();
         return this;
+    }
+
+    private Locator notification(Notification notification) {
+        return page.getByText(notification.text());
     }
 }

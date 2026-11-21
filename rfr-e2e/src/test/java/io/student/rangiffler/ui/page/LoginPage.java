@@ -5,6 +5,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
+import io.student.rangiffler.ui.component.Notification;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
@@ -42,9 +43,9 @@ public final class LoginPage {
         return this;
     }
 
-    @Step("Check that login error is '{message}'")
-    public LoginPage shouldHaveError(String message) {
-        assertThat(error).hasText(message);
+    @Step("Check that login error is '{notification}'")
+    public LoginPage shouldHaveError(Notification notification) {
+        assertThat(error).hasText(notification.text());
         return this;
     }
 }

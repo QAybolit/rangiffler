@@ -3,14 +3,15 @@ package io.student.rangiffler.test.people;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.student.rangiffler.data.TestUser;
+import io.student.rangiffler.jupiter.annotation.UiTest;
 import io.student.rangiffler.jupiter.annotation.User;
+import io.student.rangiffler.ui.component.PeopleButton;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Epic("People")
 @Feature("Friends tab")
-@Tag("ui")
+@UiTest
 class FriendsTabTest extends BasePeopleTest {
 
     @Test
@@ -27,7 +28,7 @@ class FriendsTabTest extends BasePeopleTest {
     void shouldOfferRemoveForFriend(@User(friends = 1, incomeInvitations = 1) TestUser user) {
         openPeople(user)
                 .openFriends()
-                .shouldHaveButtons(user.friends().getFirst().username(), "Remove");
+                .shouldHaveButtons(user.friends().getFirst().username(), PeopleButton.REMOVE);
     }
 
     @Test

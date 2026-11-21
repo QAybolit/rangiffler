@@ -1,5 +1,6 @@
 package io.student.rangiffler.test.people;
 
+import com.microsoft.playwright.Page;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.test.BaseWebTest;
 import io.student.rangiffler.ui.page.PeoplePage;
@@ -11,7 +12,11 @@ import io.student.rangiffler.ui.page.WelcomePage;
 abstract class BasePeopleTest extends BaseWebTest {
 
     PeoplePage openPeople(TestUser user) {
-        return new WelcomePage(page)
+        return openPeople(page, user);
+    }
+
+    PeoplePage openPeople(Page browserPage, TestUser user) {
+        return new WelcomePage(browserPage)
                 .open()
                 .clickLogin()
                 .login(user.username(), user.password())
